@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+
+<style>
+@page {
+    size: A4 portrait;
+    margin: 12mm;
+}
+
+@media print {
+    html, body {
+        width: 210mm;
+        height: 297mm;
+        background: white !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    .menu {
+        display: none !important;
+    }
+
+    .acoes-romaneio {
+        display: none !important;
+    }
+
+    .conteudo {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .romaneio-box {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 8mm !important;
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        box-sizing: border-box !important;
+    }
+
+    .info-table,
+    .total-table,
+    .assinatura-table {
+        width: 100% !important;
+    }
+
+    .info-table th,
+    .info-table td,
+    .total-table th,
+    .total-table td {
+        border: 1px solid #000 !important;
+    }
+
+    .lotes-box {
+        border: 1px solid #000 !important;
+    }
+
+    button,
+    a {
+        display: none !important;
+    }
+}
+
+.romaneio-box {
+    max-width: 820px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border: 1px solid #dcdcdc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+}
+
+.romaneio-topo {
+    text-align: center;
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+
+.romaneio-topo h1 {
+    margin: 0;
+    font-size: 30px;
+    letter-spacing: 1px;
+    color: #2c3e50;
+}
+
+.romaneio-subtitulo {
+    margin-top: 6px;
+    font-size: 15px;
+    color: #555;
+}
+
+.romaneio-meta {
+    margin-top: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.acoes-romaneio {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.botao-link {
+    display: inline-block;
+    padding: 10px 18px;
+    background: #2e7d32;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.botao-perigo {
+    background: #c0392b !important;
+}
+
+.info-table,
+.total-table,
+.assinatura-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.info-table th,
+.info-table td,
+.total-table th,
+.total-table td {
+    border: 1px solid #bfc7cf;
+    padding: 12px;
+}
+
+.info-table th,
+.total-table th {
+    background: #ecf0f1;
+    color: #2c3e50;
+}
+
+.info-table th {
+    width: 220px;
+    text-align: left;
+}
+
+.info-table td {
+    text-align: left;
+}
+
+.total-table th,
+.total-table td {
+    text-align: center;
+}
+
+.secao-titulo {
+    margin: 28px 0 12px 0;
+    font-size: 18px;
+    color: #2c3e50;
+    border-left: 5px solid #2c3e50;
+    padding-left: 10px;
+}
+
+.lotes-box {
+    border: 1px solid #bfc7cf;
+    background: #fafafa;
+    padding: 14px;
+    min-height: 50px;
+    line-height: 1.7;
+}
+
+.assinatura-area {
+    margin-top: 70px;
+}
+
+.assinatura-table td {
+    width: 33.33%;
+    text-align: center;
+    padding-top: 40px;
+    vertical-align: top;
+}
+
+.linha-assinatura {
+    border-top: 1px solid #333;
+    width: 80%;
+    margin: 0 auto 8px auto;
+    padding-top: 8px;
+}
+
+.rodape-romaneio {
+    margin-top: 35px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+</style>
+
+<div class="romaneio-box">
+
+    <div class="acoes-romaneio">
+        <form method="post" action="/concluir_romaneio" style="display:inline;">
+            <button type="submit" class="botao-link botao-perigo">
+                ✔️ Concluir Romaneio
+            </button>
+        </form>
+
+        <button onclick="window.print()">🖨️ Imprimir</button>
+
+        <a href="/romaneio/pdf" class="botao-link">📄 Baixar PDF</a>
+    </div>
+
+    <div class="romaneio-topo">
+        <h1>ROMANEIO</h1>
+        <div class="romaneio-subtitulo">Sistema de Produção da Malharia</div>
+        <div class="romaneio-meta">
+            <strong>Nº do Romaneio:</strong> {{ romaneio_id }}<br>
+            <strong>Data:</strong> {{ data_hoje or "" }}
+        </div>
+    </div>
+
+    <div class="secao-titulo">Informações Gerais</div>
+
+    <table class="info-table">
+        <tr>
+            <th>Máquina</th>
+            <td>{{ maquina }}</td>
+        </tr>
+        <tr>
+            <th>Artigo</th>
+            <td>{{ artigo }}</td>
+        </tr>
+    </table>
+
+    <div class="secao-titulo">Lotes do Romaneio</div>
+
+    <div class="lotes-box">
+        {{ lotes }}
+    </div>
+
+    <div class="secao-titulo">Totais</div>
+
+    <table class="total-table">
+        <tr>
+            <th>Total de peças</th>
+            <th>Total de peso (kg)</th>
+            <th>Valor total (R$)</th>
+        </tr>
+        <tr>
+            <td>{{ total_pecas }}</td>
+            <td>{{ "%.2f"|format((total_peso or 0)|float) }}</td>
+            <td>{{ "%.2f"|format((valor_total or 0)|float) }}</td>
+        </tr>
+    </table>
+
+    <div class="assinatura-area">
+        <table class="assinatura-table">
+            <tr>
+                <td>
+                    <div class="linha-assinatura">Conferente</div>
+                </td>
+                <td>
+                    <div class="linha-assinatura">Transporte</div>
+                </td>
+                <td>
+                    <div class="linha-assinatura">Cliente</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="rodape-romaneio">
+        Documento gerado pelo Sistema de Produção da Malharia
+    </div>
+
+</div>
+
+{% endblock %}

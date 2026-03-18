@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+
+<a href="/romaneio" style="
+    display:inline-block;
+    padding:10px 16px;
+    background:#2e7d32;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+    font-weight:bold;
+    margin-bottom:15px;
+">
+    📄 Ver último romaneio gerado
+</a>
+
+<h1>Controle de Lotes</h1>
+
+<h2>Estoque Atual</h2>
+
+<p><strong>Peças em estoque:</strong> {{ total_pecas }}</p>
+
+<p><strong>Peso total em estoque:</strong>
+{{ "%.2f"|format((total_peso or 0)|float) }} kg
+</p>
+
+<br>
+
+<h2>Estoque por Artigo</h2>
+
+<table border="1" cellpadding="8">
+
+<tr>
+<th>Artigo</th>
+<th>Peças</th>
+<th>Peso (kg)</th>
+</tr>
+
+{% for artigo, dados in estoque_artigos.items() %}
+<tr>
+<td>{{ artigo }}</td>
+<td>{{ dados.pecas }}</td>
+<td>{{ "%.2f"|format((dados.peso or 0)|float) }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<h2>Estoque por Cliente</h2>
+
+<table border="1" cellpadding="8">
+<tr>
+    <th>Cliente</th>
+    <th>Peças</th>
+    <th>Peso (kg)</th>
+    <th>Valor (R$)</th>
+</tr>
+
+{% for cliente, dados in estoque_clientes.items() %}
+<tr>
+    <td>{{ cliente }}</td>
+    <td>{{ dados.pecas }}</td>
+    <td>{{ "%.2f"|format((dados.peso or 0)|float) }}</td>
+    <td>{{ "%.2f"|format((dados.valor or 0)|float) }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<table border="1" cellpadding="8">
+
+<tr>
+    <th>Máquina</th>
+    <th>Lote</th>
+    <th>Artigo</th>
+    <th>Peças</th>
+    <th>Peso (kg)</th>
+    <th>Saldo Peças</th>
+    <th>Saldo Peso (kg)</th>
+    <th>Status</th>
+    <th>Baixar</th>
+    <th>Ajustar</th>
+</tr>
+
+{% for producao in producoes %}
+
+<tr>
+    <td>{{ producao.maquina.nome }}</td>
+    <td>{{ producao.lote }}</td>
+    <td>{{ producao.artigo.nome }}</td>
+    <td>{{ producao.pecas }}</td>
+    <td>{{ "%.2f"|format((producao.peso or 0)|float) }}</td>
+    <td>{{ producao.saldo_pecas }}</td>
+    <td>{{ "%.2f"|format((producao.saldo_peso or 0)|float) }}</td>
+
+    <td>
+    {% if producao.saldo_pecas == producao.pecas %}
+        Em estoque
+    {% elif producao.saldo_pecas > 0 %}
+        Parcial
+    {% else %}
+        Faturado
+    {% endif %}
+    </td>
+
+    <!-- BAIXAR LOTE -->
+    <td>
+        <form method="post" action="/baixar_lote">
+            <input type="hidden" name="producao_id" value="{{ producao.id }}">
+            <input type="number" name="pecas"
+                   min="1"
+                   max="{{ producao.saldo_pecas }}"
+                   required>
+            <button type="submit">Baixar</button>
+        </form>
+    </td>
+
+    <!-- AJUSTE MANUAL -->
+    <td>
+        <form method="post" action="/ajustar_lote">
+            <input type="hidden" name="producao_id" value="{{ producao.id }}">
+
+            <input type="number"
+                   name="novo_saldo"
+                   min="0"
+                   value="{{ producao.saldo_pecas }}"
+                   style="width:70px;">
+
+            <button type="submit">Ajustar</button>
+        </form>
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

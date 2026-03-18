@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Sistema da Malharia</title>
+
+<style>
+
+body{
+font-family: Arial, sans-serif;
+margin:0;
+background-color:#f5f6fa;
+}
+
+.menu{
+background-color:#2c3e50;
+padding:15px;
+}
+
+.menu a{
+color:white;
+text-decoration:none;
+margin-right:20px;
+font-weight:bold;
+}
+
+.conteudo{
+padding:30px;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+}
+
+th{
+background:#2c3e50;
+color:white;
+}
+
+th,td{
+padding:8px;
+text-align:center;
+}
+
+tr:nth-child(even){
+background:#f2f2f2;
+}
+
+input, select{
+padding:8px;
+border:1px solid #ccc;
+border-radius:5px;
+min-width:200px;
+}
+
+button{
+background:#2c3e50;
+color:white;
+border:none;
+padding:10px 18px;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+background:#34495e;
+}
+
+label{
+display:inline-block;
+width:120px;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+{% if request.session.get("usuario") %}
+<div class="menu">
+<a href="/">Início</a>
+<a href="/producao">Produção</a>
+<a href="/lotes">Lotes</a>
+<a href="/romaneio">Romaneio</a>
+<a href="/clientes">Clientes</a>
+<a href="/artigos">Artigos</a>
+<a href="/maquinas">Máquinas</a>
+<a href="/relatorio">Relatório</a>
+<a href="/faturamento">Faturamento</a>
+<a href="/logout">Sair</a>
+</div>
+{% endif %}
+
+<div class="conteudo">
+
+{% block conteudo %}
+
+{% endblock %}
+
+</div>
+
+</body>
+</html>

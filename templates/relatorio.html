@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+
+<h1>Relatório de Produção</h1>
+
+<form method="get" action="/relatorio" style="margin-bottom:20px;">
+
+    <label>Mês:</label>
+
+    <select name="mes">
+        <option value="1" {% if mes == 1 %}selected{% endif %}>Janeiro</option>
+        <option value="2" {% if mes == 2 %}selected{% endif %}>Fevereiro</option>
+        <option value="3" {% if mes == 3 %}selected{% endif %}>Março</option>
+        <option value="4" {% if mes == 4 %}selected{% endif %}>Abril</option>
+        <option value="5" {% if mes == 5 %}selected{% endif %}>Maio</option>
+        <option value="6" {% if mes == 6 %}selected{% endif %}>Junho</option>
+        <option value="7" {% if mes == 7 %}selected{% endif %}>Julho</option>
+        <option value="8" {% if mes == 8 %}selected{% endif %}>Agosto</option>
+        <option value="9" {% if mes == 9 %}selected{% endif %}>Setembro</option>
+        <option value="10" {% if mes == 10 %}selected{% endif %}>Outubro</option>
+        <option value="11" {% if mes == 11 %}selected{% endif %}>Novembro</option>
+        <option value="12" {% if mes == 12 %}selected{% endif %}>Dezembro</option>
+    </select>
+
+    <label>Ano:</label>
+    <input type="number" name="ano" value="{{ ano }}" style="width:100px;">
+
+    <button type="submit">Ver</button>
+
+</form>
+
+<h2>{{ nome_mes }}/{{ ano }}</h2>
+
+<table border="1" cellpadding="5">
+
+<tr>
+    <th rowspan="2">Dia</th>
+
+    {% for maquina in maquinas %}
+        <th colspan="4">{{ maquina.nome }}</th>
+    {% endfor %}
+
+    <th rowspan="2">Total do dia</th>
+</tr>
+
+<tr>
+    {% for maquina in maquinas %}
+        <th>1º</th>
+        <th>2º</th>
+        <th>3º</th>
+        <th>Total</th>
+    {% endfor %}
+</tr>
+
+{% for linha in relatorio %}
+<tr>
+
+    <td>{{ linha.dia }}</td>
+
+    {% for maquina in maquinas %}
+        {% set dados = linha.maquinas[maquina.nome] %}
+
+        <td>{{ "%.2f"|format((dados.t1 or 0)|float) }}</td>
+        <td>{{ "%.2f"|format((dados.t2 or 0)|float) }}</td>
+        <td>{{ "%.2f"|format((dados.t3 or 0)|float) }}</td>
+        <td><strong>{{ "%.2f"|format((dados.total or 0)|float) }}</strong></td>
+    {% endfor %}
+
+    <td><strong>{{ "%.2f"|format((linha.total_dia or 0)|float) }}</strong></td>
+
+</tr>
+{% endfor %}
+
+<tr style="background:#eee; font-weight:bold;">
+    <td>TOTAL MÊS</td>
+
+    {% for maquina in maquinas %}
+        <td colspan="3"></td>
+        <td>{{ "%.2f"|format((totais_maquina[maquina.nome] or 0)|float) }}</td>
+    {% endfor %}
+
+    <td>{{ "%.2f"|format((total_geral_mes or 0)|float) }}</td>
+</tr>
+
+</table>
+
+<br><br>
+
+<h2>Resumo Anual - {{ ano }}</h2>
+
+<table border="1" cellpadding="5">
+
+<tr>
+    <th>Mês</th>
+    {% for maquina in maquinas %}
+        <th>{{ maquina.nome }}</th>
+    {% endfor %}
+    <th>Total do mês</th>
+</tr>
+
+{% for linha in relatorio_anual %}
+<tr>
+    <td>{{ linha.mes_nome }}</td>
+
+    {% for maquina in maquinas %}
+        <td>{{ "%.2f"|format((linha.maquinas[maquina.nome] or 0)|float) }}</td>
+    {% endfor %}
+
+    <td><strong>{{ "%.2f"|format((linha.total_mes or 0)|float) }}</strong></td>
+</tr>
+{% endfor %}
+
+<tr style="background:#eee; font-weight:bold;">
+    <td>TOTAL ANO</td>
+
+    {% for maquina in maquinas %}
+        <td>{{ "%.2f"|format((totais_anuais_maquina[maquina.nome] or 0)|float) }}</td>
+    {% endfor %}
+
+    <td>{{ "%.2f"|format((total_geral_ano or 0)|float) }}</td>
+</tr>
+
+</table>
+
+<br><br>
+
+<h2>Gráfico de Produção por Máquina - {{ nome_mes }}/{{ ano }}</h2>
+
+<div style="display:flex; align-items:flex-end; gap:12px; height:320px; border:1px solid #ccc; padding:20px; background:#fafafa;">
+
+    {% for maquina, valor in grafico_maquinas.items() %}
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; width:70px;">
+
+            <div style="
+                width:50px;
+                height:{% if total_geral_mes > 0 %}{{ (valor / total_geral_mes * 250)|round(0, 'floor')|int }}{% else %}0{% endif %}px;
+                background:#2c3e50;
+                margin-bottom:8px;
+            "></div>
+
+            <div style="font-size:12px; text-align:center;">
+                {{ maquina }}
+            </div>
+
+            <div style="font-size:11px; color:#555; margin-top:4px;">
+                {{ "%.2f"|format((valor or 0)|float) }}
+            </div>
+
+        </div>
+    {% endfor %}
+
+</div>
+
+<br><br>
+
+<h2>Gráfico de Produção por Mês - {{ ano }}</h2>
+
+<div style="display:flex; align-items:flex-end; gap:8px; height:320px; border:1px solid #ccc; padding:20px; background:#fafafa; overflow-x:auto;">
+
+    {% for mes_nome, valor in grafico_meses.items() %}
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:65px;">
+
+            <div style="
+                width:42px;
+                height:{% if total_geral_ano > 0 %}{{ (valor / total_geral_ano * 250)|round(0, 'floor')|int }}{% else %}0{% endif %}px;
+                background:#7f8c8d;
+                margin-bottom:8px;
+            "></div>
+
+            <div style="font-size:11px; text-align:center;">
+                {{ mes_nome[:3] }}
+            </div>
+
+            <div style="font-size:10px; color:#555; margin-top:4px; text-align:center;">
+                {{ "%.2f"|format((valor or 0)|float) }}
+            </div>
+
+        </div>
+    {% endfor %}
+
+</div>
+
+<br><br>
+
+<h2>Gráfico de Produção por Turno - {{ nome_mes }}/{{ ano }}</h2>
+
+<div style="display:flex; align-items:flex-end; gap:30px; height:300px; border:1px solid #ccc; padding:20px; background:#fafafa; justify-content:center;">
+
+    {% set total_turnos = grafico_turnos.values() | sum %}
+
+    {% for turno, valor in grafico_turnos.items() %}
+        <div style="display:flex; flex-direction:column; align-items:center;">
+
+            <div style="
+                width:80px;
+                height:{% if total_turnos > 0 %}{{ (valor / total_turnos * 240)|round(0, 'floor')|int }}{% else %}0{% endif %}px;
+                background:#2980b9;
+                margin-bottom:10px;
+            "></div>
+
+            <div style="font-weight:bold;">
+                {{ turno }}
+            </div>
+
+            <div style="font-size:12px; color:#555;">
+                {{ "%.2f"|format((valor or 0)|float) }} kg
+            </div>
+
+        </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

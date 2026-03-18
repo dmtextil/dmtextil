@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+
+<h1>Cadastro de Máquinas</h1>
+
+<form method="post" action="/maquinas">
+
+<label>Nome da Máquina:</label>
+<input type="text" name="nome" required>
+
+<br><br>
+
+<button type="submit">Salvar</button>
+
+</form>
+
+<br>
+
+<h2>Máquinas cadastradas</h2>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Nome</th>
+</tr>
+
+{% for maquina in maquinas %}
+
+<tr>
+<td>{{ maquina.id }}</td>
+<td>{{ maquina.nome }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

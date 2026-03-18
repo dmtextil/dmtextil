@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+
+<h1>Lançamento de Produção</h1>
+
+<form method="post" action="/producao">
+
+<div style="margin-bottom:10px;">
+<label>Data:</label>
+<input type="date" name="data" required>
+</div>
+
+<div style="margin-bottom:10px;">
+<label>Turno:</label>
+<select name="turno" required>
+<option value="1º turno">1º turno</option>
+<option value="2º turno">2º turno</option>
+<option value="3º turno">3º turno</option>
+</select>
+</div>
+
+<div style="margin-bottom:10px;">
+<label>Máquina:</label>
+<select name="maquina_id" required>
+{% for maquina in maquinas %}
+<option value="{{ maquina.id }}">{{ maquina.nome }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div style="margin-bottom:10px;">
+<label>Artigo:</label>
+<select name="artigo_id" required>
+{% for artigo in artigos %}
+<option value="{{ artigo.id }}">{{ artigo.nome }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div style="margin-bottom:10px;">
+<label>Lote:</label>
+<input type="text" name="lote" maxlength="2" required>
+</div>
+
+<div style="margin-bottom:10px;">
+<label>Peso (kg):</label>
+<input type="text" name="peso" required autofocus>
+</div>
+
+<br>
+
+<button type="submit">Salvar Produção</button>
+
+</form>
+
+<h2>Lançamentos</h2>
+
+<ul>
+{% for producao in producoes %}
+    <li>
+        {{ producao.data }} | {{ producao.turno }} | Máquina: {{ producao.maquina.nome }} | Artigo: {{ producao.artigo.nome }} |
+        Peso: {{ "%.2f"|format((producao.peso or 0)|float) }} kg |
+        Valor/kg: R$ {{ "%.2f"|format((producao.valor_kg or 0)|float) }} |
+        Total: R$ {{ "%.2f"|format((producao.valor_total or 0)|float) }}
+    </li>
+{% endfor %}
+</ul>
+
+<h2>Resumo da Produção</h2>
+
+<p><strong>Data:</strong> {{ data_hoje or "" }}</p>
+
+<p><strong>Total 1º turno:</strong> {{ "%.2f"|format((total_1_turno or 0)|float) }} kg</p>
+<p><strong>Total 2º turno:</strong> {{ "%.2f"|format((total_2_turno or 0)|float) }} kg</p>
+<p><strong>Total 3º turno:</strong> {{ "%.2f"|format((total_3_turno or 0)|float) }} kg</p>
+<h3>Total do dia: {{ "%.2f"|format((total_dia or 0)|float) }} kg</h3>
+<h3>Valor total do dia: R$ {{ "%.2f"|format((valor_total_dia or 0)|float) }}</h3>
+
+<h2>Produção por Máquina</h2>
+
+{% if resumo_maquinas is defined and resumo_maquinas %}
+<ul>
+{% for maquina, dados in resumo_maquinas.items() %}
+    <li>
+        <strong>{{ maquina }}</strong> —
+        {{ "%.2f"|format((dados.peso_total or 0)|float) }} kg |
+        R$ {{ "%.2f"|format((dados.valor_total or 0)|float) }}
+    </li>
+{% endfor %}
+</ul>
+{% else %}
+<p>Nenhum resumo por máquina disponível.</p>
+{% endif %}
+
+{% endblock %}
