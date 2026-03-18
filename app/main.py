@@ -13,6 +13,15 @@ import app.models
 from app import crud
 
 Base.metadata.create_all(bind=engine)
+admin_user = os.getenv("ADMIN_USER")
+admin_password = os.getenv("ADMIN_PASSWORD")
+
+if admin_user and admin_password:
+    db_init = SessionLocal()
+    try:
+        crud.criar_usuario_admin(db_init, admin_user, admin_password)
+    finally:
+        db_init.close()
 # db_init = SessionLocal()
 # try:
 #     crud.excluir_usuario_por_username(db_init, "admin")
