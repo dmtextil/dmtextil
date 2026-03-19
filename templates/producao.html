@@ -56,16 +56,40 @@
 
 <h2>Lançamentos</h2>
 
-<ul>
-{% for producao in producoes %}
-    <li>
-        {{ producao.data }} | {{ producao.turno }} | Máquina: {{ producao.maquina.nome }} | Artigo: {{ producao.artigo.nome }} |
-        Peso: {{ "%.2f"|format((producao.peso or 0)|float) }} kg |
-        Valor/kg: R$ {{ "%.2f"|format((producao.valor_kg or 0)|float) }} |
-        Total: R$ {{ "%.2f"|format((producao.valor_total or 0)|float) }}
-    </li>
-{% endfor %}
-</ul>
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Data</th>
+        <th>Turno</th>
+        <th>Máquina</th>
+        <th>Artigo</th>
+        <th>Lote</th>
+        <th>Peças</th>
+        <th>Peso (kg)</th>
+        <th>Valor/kg</th>
+        <th>Total</th>
+        <th>Ações</th>
+    </tr>
+
+    {% for producao in producoes %}
+    <tr>
+        <td>{{ producao.data }}</td>
+        <td>{{ producao.turno }}</td>
+        <td>{{ producao.maquina.nome }}</td>
+        <td>{{ producao.artigo.nome }}</td>
+        <td>{{ producao.lote }}</td>
+        <td>{{ producao.pecas }}</td>
+        <td>{{ "%.2f"|format((producao.peso or 0)|float) }}</td>
+        <td>R$ {{ "%.2f"|format((producao.valor_kg or 0)|float) }}</td>
+        <td>R$ {{ "%.2f"|format((producao.valor_total or 0)|float) }}</td>
+        <td>
+            <form method="post" action="/producao/excluir" onsubmit="return confirm('Deseja realmente excluir este lançamento?');">
+                <input type="hidden" name="producao_id" value="{{ producao.id }}">
+                <button type="submit" style="background:#c0392b;">Excluir</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h2>Resumo da Produção</h2>
 

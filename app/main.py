@@ -4,7 +4,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from app.models import Producao
+from app.models import Producao, FaturamentoExtra
 from starlette.middleware.sessions import SessionMiddleware
+
 
 from sqlalchemy import text
 
@@ -117,6 +119,70 @@ def fazer_login(
         request.session["usuario"] = usuario.username
 
         return RedirectResponse(url="/", status_code=303)
+    finally:
+        db.close()
+
+@app.get("/alterar-senha", response_class=HTMLResponse)
+def tela_alterar_senha(request: Request):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
+    return templates.TemplateResponse(
+        "alterar_senha.html",
+        {
+            "request": request,
+            "mensagem": "",
+            "erro": ""
+        }
+    )
+
+
+@app.post("/alterar-senha", response_class=HTMLResponse)
+def salvar_alterar_senha(
+    request: Request,
+    senha_atual: str = Form(...),
+    nova_senha: str = Form(...),
+    confirmar_senha: str = Form(...)
+):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
+    username = request.session.get("usuario")
+
+    db = SessionLocal()
+    try:
+        usuario = crud.autenticar_usuario(db, username, senha_atual)
+
+        if not usuario:
+            return templates.TemplateResponse(
+                "alterar_senha.html",
+                {
+                    "request": request,
+                    "mensagem": "",
+                    "erro": "Senha atual incorreta."
+                }
+            )
+
+        if nova_senha != confirmar_senha:
+            return templates.TemplateResponse(
+                "alterar_senha.html",
+                {
+                    "request": request,
+                    "mensagem": "",
+                    "erro": "A nova senha e a confirmação não conferem."
+                }
+            )
+
+        crud.alterar_senha_usuario(db, username, nova_senha)
+
+        return templates.TemplateResponse(
+            "alterar_senha.html",
+            {
+                "request": request,
+                "mensagem": "Senha alterada com sucesso.",
+                "erro": ""
+            }
+        )
     finally:
         db.close()
 
@@ -369,6 +435,21 @@ def salvar_producao(
     finally:
         db.close()
 
+@app.post("/producao/excluir")
+def excluir_producao(
+    request: Request,
+    producao_id: int = Form(...)
+):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
+    db = SessionLocal()
+    try:
+        crud.excluir_producao(db, producao_id)
+        return RedirectResponse(url="/producao", status_code=303)
+    finally:
+        db.close()
+
 
 # ================= LOTES =================
 
@@ -379,10 +460,12 @@ def tela_lotes(request: Request):
 
     db = SessionLocal()
     try:
-        producoes = crud.listar_producoes(db)
+        producoes = crud.listar_lotes_agrupados(db)
         total_pecas, total_peso = crud.resumo_estoque(db)
         estoque_artigos = crud.estoque_por_artigo(db)
         estoque_clientes = crud.estoque_por_cliente(db)
+        maquinas = crud.listar_maquinas(db)
+        artigos = crud.listar_artigos(db)
 
         resumo_maquinas = {}
 
@@ -395,9 +478,39 @@ def tela_lotes(request: Request):
                 "total_peso": total_peso,
                 "estoque_artigos": estoque_artigos,
                 "estoque_clientes": estoque_clientes,
-                "resumo_maquinas": resumo_maquinas
+                "resumo_maquinas": resumo_maquinas,
+                "maquinas": maquinas,
+                "artigos": artigos
             }
         )
+    finally:
+        db.close()
+
+@app.post("/lotes/manual")
+def salvar_lote_manual(
+    request: Request,
+    maquina_id: int = Form(...),
+    artigo_id: int = Form(...),
+    lote: str = Form(...),
+    pecas: int = Form(...),
+    peso: str = Form(...)
+):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
+    peso_texto = peso.replace(",", ".").replace(" ", "")
+
+    db = SessionLocal()
+    try:
+        crud.criar_lote_manual(
+            db,
+            maquina_id=maquina_id,
+            artigo_id=artigo_id,
+            lote=lote,
+            pecas=pecas,
+            peso=float(peso_texto)
+        )
+        return RedirectResponse(url="/lotes", status_code=303)
     finally:
         db.close()
 
@@ -493,6 +606,7 @@ def concluir_romaneio():
 
 @app.get("/relatorio", response_class=HTMLResponse)
 def tela_relatorio(request: Request, mes: int = None, ano: int = None):
+
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
 
@@ -523,23 +637,60 @@ def tela_relatorio(request: Request, mes: int = None, ano: int = None):
     }
 
     nome_mes = nomes_meses.get(mes, "")
-
     dias_no_mes = calendar.monthrange(ano, mes)[1]
 
     db = SessionLocal()
     try:
         maquinas = crud.listar_maquinas(db)
 
-        # ================= RELATÓRIO MENSAL =================
-        relatorio = []
+        # ================= PRODUÇÃO DO MÊS (UMA CONSULTA) =================
+        prefixo_mes = f"{ano}-{mes:02d}-"
 
+        producoes_mes = db.query(Producao).filter(
+            Producao.data.like(f"{prefixo_mes}%")
+        ).all()
+
+        # mapa: (dia, maquina_id) -> turnos
+        mapa_mes = {}
+        total_turno1 = 0
+        total_turno2 = 0
+        total_turno3 = 0
+
+        for p in producoes_mes:
+            try:
+                dia = int(p.data[-2:])
+            except:
+                continue
+
+            chave = (dia, p.maquina_id)
+
+            if chave not in mapa_mes:
+                mapa_mes[chave] = {
+                    "t1": 0,
+                    "t2": 0,
+                    "t3": 0,
+                    "total": 0
+                }
+
+            peso = float(p.peso)
+
+            if p.turno == "1º turno":
+                mapa_mes[chave]["t1"] += peso
+                total_turno1 += peso
+            elif p.turno == "2º turno":
+                mapa_mes[chave]["t2"] += peso
+                total_turno2 += peso
+            elif p.turno == "3º turno":
+                mapa_mes[chave]["t3"] += peso
+                total_turno3 += peso
+
+            mapa_mes[chave]["total"] += peso
+
+        relatorio = []
         totais_maquina = {m.nome: 0 for m in maquinas}
         total_geral_mes = 0
 
         for dia in range(1, dias_no_mes + 1):
-
-            data = f"{ano}-{mes:02d}-{dia:02d}"
-
             linha = {
                 "dia": dia,
                 "maquinas": {},
@@ -547,40 +698,55 @@ def tela_relatorio(request: Request, mes: int = None, ano: int = None):
             }
 
             for maquina in maquinas:
+                dados = mapa_mes.get((dia, maquina.id), {
+                    "t1": 0,
+                    "t2": 0,
+                    "t3": 0,
+                    "total": 0
+                })
 
-                producoes = db.query(Producao).filter(
-                    Producao.data == data,
-                    Producao.maquina_id == maquina.id
-                ).all()
-
-                turno1 = sum(float(p.peso) for p in producoes if p.turno == "1º turno")
-                turno2 = sum(float(p.peso) for p in producoes if p.turno == "2º turno")
-                turno3 = sum(float(p.peso) for p in producoes if p.turno == "3º turno")
-
-                total_maquina = turno1 + turno2 + turno3
-
-                linha["maquinas"][maquina.nome] = {
-                    "t1": turno1,
-                    "t2": turno2,
-                    "t3": turno3,
-                    "total": total_maquina
-                }
-
-                linha["total_dia"] += total_maquina
-                totais_maquina[maquina.nome] += total_maquina
-                total_geral_mes += total_maquina
+                linha["maquinas"][maquina.nome] = dados
+                linha["total_dia"] += dados["total"]
+                totais_maquina[maquina.nome] += dados["total"]
+                total_geral_mes += dados["total"]
 
             relatorio.append(linha)
 
-        # ================= RELATÓRIO ANUAL =================
+        grafico_maquinas = {
+            maquina.nome: totais_maquina[maquina.nome]
+            for maquina in maquinas
+        }
+
+        grafico_turnos = {
+            "1º turno": total_turno1,
+            "2º turno": total_turno2,
+            "3º turno": total_turno3
+        }
+
+        # ================= PRODUÇÃO DO ANO (UMA CONSULTA) =================
+        prefixo_ano = f"{ano}-"
+
+        producoes_ano = db.query(Producao).filter(
+            Producao.data.like(f"{prefixo_ano}%")
+        ).all()
+
+        # mapa: (mes_numero, maquina_id) -> total
+        mapa_ano = {}
+
+        for p in producoes_ano:
+            try:
+                mes_ref = int(p.data[5:7])
+            except:
+                continue
+
+            chave = (mes_ref, p.maquina_id)
+            mapa_ano[chave] = mapa_ano.get(chave, 0) + float(p.peso)
+
         relatorio_anual = []
         totais_anuais_maquina = {m.nome: 0 for m in maquinas}
         total_geral_ano = 0
 
         for mes_ref in range(1, 13):
-
-            dias_mes_ref = calendar.monthrange(ano, mes_ref)[1]
-
             linha_anual = {
                 "mes_numero": mes_ref,
                 "mes_nome": nomes_meses[mes_ref],
@@ -589,17 +755,7 @@ def tela_relatorio(request: Request, mes: int = None, ano: int = None):
             }
 
             for maquina in maquinas:
-                total_maquina_mes = 0
-
-                for dia in range(1, dias_mes_ref + 1):
-                    data = f"{ano}-{mes_ref:02d}-{dia:02d}"
-
-                    producoes = db.query(Producao).filter(
-                        Producao.data == data,
-                        Producao.maquina_id == maquina.id
-                    ).all()
-
-                    total_maquina_mes += sum(float(p.peso) for p in producoes)
+                total_maquina_mes = mapa_ano.get((mes_ref, maquina.id), 0)
 
                 linha_anual["maquinas"][maquina.nome] = total_maquina_mes
                 linha_anual["total_mes"] += total_maquina_mes
@@ -613,26 +769,6 @@ def tela_relatorio(request: Request, mes: int = None, ano: int = None):
             for linha in relatorio_anual
         }
 
-        total_turno1 = 0
-        total_turno2 = 0
-        total_turno3 = 0
-
-        for linha in relatorio:
-            for dados in linha["maquinas"].values():
-                total_turno1 += dados["t1"]
-                total_turno2 += dados["t2"]
-                total_turno3 += dados["t3"]
-
-        grafico_turnos = {
-            "1º turno": total_turno1,
-            "2º turno": total_turno2,
-            "3º turno": total_turno3
-        }
-
-        grafico_maquinas = {
-            maquina.nome: totais_maquina[maquina.nome]
-            for maquina in maquinas
-        }
         return templates.TemplateResponse(
             "relatorio.html",
             {
@@ -697,38 +833,45 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
         faturamento_dias = []
         total_mes = 0
 
+        extras_mes = crud.listar_faturamentos_extras_por_mes(db, ano, mes)
+
+        extras_por_data = {}
+        descricoes_por_data = {}
+
+        for extra in extras_mes:
+            if extra.data not in extras_por_data:
+                extras_por_data[extra.data] = 0
+                descricoes_por_data[extra.data] = []
+
+            extras_por_data[extra.data] += float(extra.valor)
+
+            if extra.descricao and extra.descricao not in descricoes_por_data[extra.data]:
+                descricoes_por_data[extra.data].append(extra.descricao)
+
+        dados_dias = []
+        total_mes = 0
+
         for dia in range(1, dias_no_mes + 1):
             data = f"{ano}-{mes:02d}-{dia:02d}"
 
             valor_producao = crud.valor_total_do_dia(db, data)
-            valor_extras = crud.total_extras_do_dia(db, data)
-            total_dia = float(valor_producao) + float(valor_extras)
 
-            descricoes = []
+            valor_extras = extras_por_data.get(data, 0)
+            descricoes_extras = descricoes_por_data.get(data, [])
 
-            if float(valor_producao) > 0:
-                descricoes.append("Produção")
+            total_dia = valor_producao + valor_extras
 
-            descricoes_extras = crud.descricoes_extras_do_dia(db, data)
-
-            for descricao in descricoes_extras:
-                if descricao not in descricoes:
-                    descricoes.append(descricao)
-
-            descricao_final = " + ".join(descricoes) if descricoes else "-"
-
-            faturamento_dias.append({
-                "dia": dia,
+            dados_dias.append({
                 "data": data,
-                "descricao": descricao_final,
-                "valor_producao": valor_producao,
-                "valor_extras": valor_extras,
-                "total_dia": total_dia
+                "producao": valor_producao,
+                "extras": valor_extras,
+                "descricoes": descricoes_extras,
+                "total": total_dia
             })
 
             total_mes += total_dia
 
-        # ===== RESUMO DOS ÚLTIMOS 12 MESES =====
+        # ===== RESUMO DOS ÚLTIMOS 12 MESES (OTIMIZADO) =====
 
         resumo_12_meses = []
         total_12_meses = 0
@@ -748,6 +891,26 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
             12: "Dezembro"
         }
 
+        # Buscar toda a produção de uma vez
+        producoes_todas = db.query(Producao).all()
+
+        producao_por_mes = {}
+
+        for p in producoes_todas:
+            if p.data and len(p.data) >= 7 and p.data[:4].isdigit():
+                chave = p.data[:7]  # formato YYYY-MM
+                producao_por_mes[chave] = producao_por_mes.get(chave, 0) + float(p.valor_total)
+
+        # Buscar todos os extras de uma vez
+        extras_todos = db.query(FaturamentoExtra).all()
+
+        extras_por_mes = {}
+
+        for e in extras_todos:
+            if e.data and len(e.data) >= 7 and e.data[:4].isdigit():
+                chave = e.data[:7]  # formato YYYY-MM
+                extras_por_mes[chave] = extras_por_mes.get(chave, 0) + float(e.valor)
+
         # COMEÇAR NO ÚLTIMO MÊS COMPLETO
         mes_temp = mes - 1
         ano_temp = ano
@@ -757,16 +920,11 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
             ano_temp -= 1
 
         for _ in range(12):
-            dias_mes_temp = calendar.monthrange(ano_temp, mes_temp)[1]
-            total_mes_temp = 0
+            chave = f"{ano_temp}-{mes_temp:02d}"
 
-            for dia in range(1, dias_mes_temp + 1):
-                data_temp = f"{ano_temp}-{mes_temp:02d}-{dia:02d}"
-
-                valor_producao = crud.valor_total_do_dia(db, data_temp)
-                valor_extras = crud.total_extras_do_dia(db, data_temp)
-
-                total_mes_temp += float(valor_producao) + float(valor_extras)
+            total_producao = producao_por_mes.get(chave, 0)
+            total_extras = extras_por_mes.get(chave, 0)
+            total_mes_temp = total_producao + total_extras
 
             resumo_12_meses.append({
                 "mes_numero": mes_temp,

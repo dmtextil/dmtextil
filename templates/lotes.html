@@ -17,6 +17,46 @@
 
 <h1>Controle de Lotes</h1>
 
+<h2>Lançar lote manual</h2>
+
+<form method="post" action="/lotes/manual" style="margin-bottom:25px;">
+
+    <div style="margin-bottom:10px;">
+        <label>Máquina:</label>
+        <select name="maquina_id" required>
+            {% for maquina in maquinas %}
+                <option value="{{ maquina.id }}">{{ maquina.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Artigo:</label>
+        <select name="artigo_id" required>
+            {% for artigo in artigos %}
+                <option value="{{ artigo.id }}">{{ artigo.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Lote:</label>
+        <input type="text" name="lote" maxlength="20" required>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Peças:</label>
+        <input type="number" name="pecas" min="1" required>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Peso (kg):</label>
+        <input type="text" name="peso" required>
+    </div>
+
+    <button type="submit">Adicionar lote</button>
+</form>
+
 <h2>Estoque Atual</h2>
 
 <p><strong>Peças em estoque:</strong> {{ total_pecas }}</p>
@@ -90,22 +130,16 @@
 {% for producao in producoes %}
 
 <tr>
-    <td>{{ producao.maquina.nome }}</td>
+    <td>{{ producao.maquina_nome }}</td>
     <td>{{ producao.lote }}</td>
-    <td>{{ producao.artigo.nome }}</td>
+    <td>{{ producao.artigo_nome }}</td>
     <td>{{ producao.pecas }}</td>
     <td>{{ "%.2f"|format((producao.peso or 0)|float) }}</td>
     <td>{{ producao.saldo_pecas }}</td>
     <td>{{ "%.2f"|format((producao.saldo_peso or 0)|float) }}</td>
 
     <td>
-    {% if producao.saldo_pecas == producao.pecas %}
-        Em estoque
-    {% elif producao.saldo_pecas > 0 %}
-        Parcial
-    {% else %}
-        Faturado
-    {% endif %}
+    {{ producao.status }}
     </td>
 
     <!-- BAIXAR LOTE -->

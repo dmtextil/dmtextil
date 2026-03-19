@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from passlib.context import CryptContext
 from app import models
+from sqlalchemy import desc
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
@@ -83,14 +84,10 @@ def criar_producao(db: Session, data: str, turno: str, maquina_id: int, artigo_i
 
 
 def listar_producoes(db: Session):
-    return db.query(models.Producao).options(
-        joinedload(models.Producao.maquina),
-        joinedload(models.Producao.artigo).joinedload(models.Artigo.cliente)
-    ).filter(
+    return db.query(models.Producao).filter(
         models.Producao.saldo_pecas > 0
     ).order_by(
-        models.Producao.maquina_id,
-        models.Producao.lote
+        desc(models.Producao.id)
     ).all()
 
 def total_por_turno(db: Session, data: str, turno: str):
@@ -689,3 +686,106 @@ def descricoes_extras_do_dia(db: Session, data: str):
     descricoes = [extra.descricao.strip() for extra in extras if extra.descricao]
 
     return descricoes
+
+def excluir_producao(db: Session, producao_id: int):
+    producao = db.query(models.Producao).filter(
+        models.Producao.id == producao_id
+    ).first()
+
+    if not producao:
+        return False, "Produção não encontrada."
+
+    # Segurança: só permite excluir se não houve baixa
+    if producao.saldo_pecas != producao.pecas:
+        return False, "Não é possível excluir uma produção que já teve baixa."
+
+    db.delete(producao)
+    db.commit()
+
+    return True, "Produção excluída com sucesso."
+
+def listar_lotes_agrupados(db: Session):
+    producoes = db.query(models.Producao).options(
+        joinedload(models.Producao.maquina),
+        joinedload(models.Producao.artigo)
+    ).filter(
+        models.Producao.saldo_pecas > 0
+    ).all()
+
+    agrupado = {}
+
+    for p in producoes:
+        chave = (p.maquina_id, p.artigo_id, p.lote)
+
+        if chave not in agrupado:
+            agrupado[chave] = {
+                "maquina_nome": p.maquina.nome,
+                "artigo_nome": p.artigo.nome,
+                "lote": p.lote,
+                "pecas": 0,
+                "peso": 0,
+                "saldo_pecas": 0,
+                "saldo_peso": 0,
+                "status": "Em estoque"
+            }
+
+        agrupado[chave]["pecas"] += p.pecas
+        agrupado[chave]["peso"] += float(p.peso)
+        agrupado[chave]["saldo_pecas"] += p.saldo_pecas
+        agrupado[chave]["saldo_peso"] += float(p.saldo_peso)
+
+    # ajustar status final
+    for item in agrupado.values():
+        if item["saldo_pecas"] == item["pecas"]:
+            item["status"] = "Em estoque"
+        elif item["saldo_pecas"] > 0:
+            item["status"] = "Parcial"
+        else:
+            item["status"] = "Faturado"
+
+    return sorted(
+        list(agrupado.values()),
+        key=lambda item: (item["maquina_nome"], item["lote"])
+    )
+
+def criar_lote_manual(db: Session, maquina_id: int, artigo_id: int, lote: str, pecas: int, peso: float):
+    artigo = db.query(models.Artigo).filter(models.Artigo.id == artigo_id).first()
+
+    if not artigo:
+        return None
+
+    valor_kg = float(artigo.valor_kg)
+    valor_total = float(peso) * valor_kg
+
+    nova_producao = models.Producao(
+        data="ESTOQUE INICIAL",
+        turno="MANUAL",
+        maquina_id=maquina_id,
+        artigo_id=artigo_id,
+        lote=lote,
+        pecas=pecas,
+        saldo_pecas=pecas,
+        peso=peso,
+        saldo_peso=peso,
+        valor_kg=valor_kg,
+        valor_total=valor_total
+    )
+
+    db.add(nova_producao)
+    db.commit()
+    db.refresh(nova_producao)
+
+    return nova_producao
+
+def alterar_senha_usuario(db: Session, username: str, nova_senha: str):
+    usuario = db.query(models.Usuario).filter(
+        models.Usuario.username == username
+    ).first()
+
+    if not usuario:
+        return False
+
+    usuario.senha_hash = pwd_context.hash(nova_senha)
+    db.commit()
+
+    return True
