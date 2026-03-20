@@ -4,86 +4,84 @@
 
 <h1>Cadastro de Artigos</h1>
 
-<form method="post" action="/artigos">
+<h2>Novo Artigo</h2>
 
-<label>Nome do Artigo:</label>
-<input type="text" name="nome" required>
+<form method="post" action="/artigos" style="margin-bottom:30px;">
 
-<br><br>
+    <div style="margin-bottom:10px;">
+        <label>Nome:</label>
+        <input type="text" name="nome" required>
+    </div>
 
-<label>Código:</label>
-<input type="text" name="codigo" required>
+    <div style="margin-bottom:10px;">
+        <label>Código:</label>
+        <input type="text" name="codigo">
+    </div>
 
-<br><br>
+    <div style="margin-bottom:10px;">
+        <label>Valor/kg:</label>
+        <input type="number" step="0.01" name="valor_kg" required>
+    </div>
 
-<label>Valor por kg:</label>
-<input type="number" step="0.01" name="valor_kg" required>
-
-<br><br>
-
-<label>Cliente:</label>
-<select name="cliente_id" required>
-
-{% for cliente in clientes %}
-<option value="{{ cliente.id }}">{{ cliente.nome }}</option>
-{% endfor %}
-
-</select>
-
-<br><br>
-
-<button type="submit">Salvar</button>
-
-</form>
-
-<br>
-
-<h2>Artigos cadastrados</h2>
-
-<table>
-
-<tr>
-<th>ID</th>
-<th>Nome</th>
-<th>Código</th>
-<th>Valor/kg</th>
-<th>Cliente</th>
-</tr>
-
-{% for artigo in artigos %}
-<tr>
-<form method="post" action="/editar_artigo">
-
-    <input type="hidden" name="artigo_id" value="{{ artigo.id }}">
-
-    <td>
-        <input type="text" name="nome" value="{{ artigo.nome }}" required>
-    </td>
-
-    <td>
-        <input type="text" name="codigo" value="{{ artigo.codigo or '' }}">
-    </td>
-
-    <td>
-        <input type="number" step="0.01" name="valor_kg"
-               value="{{ artigo.valor_kg }}" required>
-    </td>
-
-    <td>
+    <div style="margin-bottom:10px;">
+        <label>Cliente:</label>
         <select name="cliente_id" required>
             {% for cliente in clientes %}
-                <option value="{{ cliente.id }}"
-                    {% if cliente.id == artigo.cliente_id %}selected{% endif %}>
-                    {{ cliente.nome }}
-                </option>
+                <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
             {% endfor %}
         </select>
-    </td>
+    </div>
 
-    <td>
-        <button type="submit">Salvar</button>
-    </td>
+    <button type="submit">Cadastrar Artigo</button>
 
 </form>
-</tr>
-{% endfor %}
+
+<h2>Artigos Cadastrados</h2>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Nome</th>
+        <th>Código</th>
+        <th>Valor/kg</th>
+        <th>Cliente</th>
+        <th>Ação</th>
+    </tr>
+
+    {% for artigo in artigos %}
+    <tr>
+        <form method="post" action="/editar_artigo">
+            <input type="hidden" name="artigo_id" value="{{ artigo.id }}">
+
+            <td>
+                <input type="text" name="nome" value="{{ artigo.nome }}" required>
+            </td>
+
+            <td>
+                <input type="text" name="codigo" value="{{ artigo.codigo or '' }}">
+            </td>
+
+            <td>
+                <input type="number" step="0.01" name="valor_kg"
+                       value="{{ artigo.valor_kg }}" required>
+            </td>
+
+            <td>
+                <select name="cliente_id" required>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}"
+                            {% if cliente.id == artigo.cliente_id %}selected{% endif %}>
+                            {{ cliente.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+
+            <td>
+                <button type="submit">Salvar</button>
+            </td>
+        </form>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
