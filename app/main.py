@@ -321,32 +321,32 @@ def salvar_maquina(request: Request, nome: str = Form(...)):
 
 @app.get("/producao", response_class=HTMLResponse)
 def tela_producao(request: Request):
+    from datetime import date
+
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
 
+    data_hoje_input = date.today().isoformat()
+
     db = SessionLocal()
     try:
-        producoes = crud.listar_producoes(db)
+        hoje_texto = date.today().isoformat()
+
+        producoes = db.query(Producao).filter(
+            Producao.data == hoje_texto
+        ).order_by(
+            Producao.id.desc()
+        ).all()
         maquinas = crud.listar_maquinas(db)
         artigos = crud.listar_artigos(db)
 
-        data_hoje = ""
-        total_1_turno = 0
-        total_2_turno = 0
-        total_3_turno = 0
-        total_dia = 0
-        valor_total_dia = 0
-        resumo_maquinas = {}
-
-        if producoes:
-            data_hoje = producoes[-1].data
-
-            total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
-            total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
-            total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
-            total_dia = crud.total_do_dia(db, data_hoje)
-            valor_total_dia = crud.valor_total_do_dia(db, data_hoje)
-            resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data_hoje)
+        data_hoje = hoje_texto
+        total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
+        total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
+        total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
+        total_dia = crud.total_do_dia(db, data_hoje)
+        valor_total_dia = crud.valor_total_do_dia(db, data_hoje)
+        resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data_hoje)
 
         return templates.TemplateResponse(
             "producao.html",
@@ -356,6 +356,7 @@ def tela_producao(request: Request):
                 "maquinas": maquinas,
                 "artigos": artigos,
                 "data_hoje": data_hoje,
+                "data_hoje_input": data_hoje_input,
                 "total_1_turno": total_1_turno,
                 "total_2_turno": total_2_turno,
                 "total_3_turno": total_3_turno,
@@ -517,12 +518,18 @@ def salvar_lote_manual(
 
 @app.post("/baixar_lote")
 def baixar_lote(
-    producao_id: int = Form(...),
+    request: Request,
+    maquina_nome: str = Form(...),
+    artigo_nome: str = Form(...),
+    lote: str = Form(...),
     pecas: int = Form(...)
 ):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
     db = SessionLocal()
     try:
-        crud.baixar_lote(db, producao_id, pecas)
+        crud.baixar_lote_agrupado(db, maquina_nome, artigo_nome, lote, pecas)
         return RedirectResponse(url="/lotes", status_code=303)
     finally:
         db.close()
@@ -530,12 +537,18 @@ def baixar_lote(
 
 @app.post("/ajustar_lote")
 def ajustar_lote(
-    producao_id: int = Form(...),
+    request: Request,
+    maquina_nome: str = Form(...),
+    artigo_nome: str = Form(...),
+    lote: str = Form(...),
     novo_saldo: int = Form(...)
 ):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
     db = SessionLocal()
     try:
-        crud.ajustar_saldo_lote(db, producao_id, novo_saldo)
+        crud.ajustar_lote_agrupado(db, maquina_nome, artigo_nome, lote, novo_saldo)
         return RedirectResponse(url="/lotes", status_code=303)
     finally:
         db.close()
@@ -854,19 +867,30 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
         for dia in range(1, dias_no_mes + 1):
             data = f"{ano}-{mes:02d}-{dia:02d}"
 
-            valor_producao = crud.valor_total_do_dia(db, data)
-
-            valor_extras = extras_por_data.get(data, 0)
+            valor_producao = float(crud.valor_total_do_dia(db, data))
+            valor_extras = float(extras_por_data.get(data, 0))
             descricoes_extras = descricoes_por_data.get(data, [])
 
             total_dia = valor_producao + valor_extras
 
-            dados_dias.append({
+            descricoes = []
+
+            if valor_producao > 0:
+                descricoes.append("Produção")
+
+            for descricao in descricoes_extras:
+                if descricao and descricao not in descricoes:
+                    descricoes.append(descricao)
+
+            descricao_final = " + ".join(descricoes) if descricoes else "-"
+
+            faturamento_dias.append({
+                "dia": dia,
                 "data": data,
-                "producao": valor_producao,
-                "extras": valor_extras,
-                "descricoes": descricoes_extras,
-                "total": total_dia
+                "descricao": descricao_final,
+                "valor_producao": valor_producao,
+                "valor_extras": valor_extras,
+                "total_dia": total_dia
             })
 
             total_mes += total_dia

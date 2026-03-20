@@ -134,7 +134,17 @@ def resumo_por_maquina_no_dia(db: Session, data: str):
         resumo[nome_maquina]["peso_total"] += float(producao.peso)
         resumo[nome_maquina]["valor_total"] += float(producao.valor_total)
 
-    return resumo
+    def extrair_numero_maquina(nome):
+        try:
+            return int(nome.split()[-1])
+        except:
+            return 9999
+
+    resumo_ordenado = dict(
+        sorted(resumo.items(), key=lambda item: extrair_numero_maquina(item[0]))
+    )
+
+    return resumo_ordenado
 
 def baixar_lote(db: Session, producao_id: int, pecas_baixadas: int):
 
@@ -789,3 +799,120 @@ def alterar_senha_usuario(db: Session, username: str, nova_senha: str):
     db.commit()
 
     return True
+
+def baixar_lote_agrupado(db: Session, maquina_nome: str, artigo_nome: str, lote: str, pecas_baixadas: int):
+    producoes = db.query(models.Producao).options(
+        joinedload(models.Producao.maquina),
+        joinedload(models.Producao.artigo)
+    ).filter(
+        models.Producao.lote == lote,
+        models.Producao.saldo_pecas > 0
+    ).all()
+
+    producoes_filtradas = [
+        p for p in producoes
+        if p.maquina.nome == maquina_nome and p.artigo.nome == artigo_nome
+    ]
+
+    if not producoes_filtradas:
+        return
+
+    restante = pecas_baixadas
+
+    for producao in producoes_filtradas:
+        if restante <= 0:
+            break
+
+        if producao.saldo_pecas <= 0:
+            continue
+
+        pecas_nesta_producao = min(restante, producao.saldo_pecas)
+
+        peso_medio = float(producao.peso) / float(producao.pecas)
+        peso_baixado = peso_medio * pecas_nesta_producao
+        valor_baixado = peso_baixado * float(producao.valor_kg)
+
+        producao.saldo_pecas -= pecas_nesta_producao
+        producao.saldo_peso = float(producao.saldo_peso) - float(peso_baixado)
+
+        ultima_baixa_aberta = db.query(models.BaixaLote).filter(
+            models.BaixaLote.maquina_id == producao.maquina_id,
+            models.BaixaLote.fechado == False
+        ).order_by(
+            models.BaixaLote.id.desc()
+        ).first()
+
+        if ultima_baixa_aberta and ultima_baixa_aberta.romaneio_id:
+            romaneio_id = ultima_baixa_aberta.romaneio_id
+        else:
+            ultima_baixa = db.query(models.BaixaLote).order_by(
+                models.BaixaLote.id.desc()
+            ).first()
+
+            if ultima_baixa and ultima_baixa.romaneio_id:
+                romaneio_id = ultima_baixa.romaneio_id + 1
+            else:
+                romaneio_id = 1
+
+        nova_baixa = models.BaixaLote(
+            data=producao.data,
+            producao_id=producao.id,
+            maquina_id=producao.maquina_id,
+            artigo_id=producao.artigo_id,
+            lote=producao.lote,
+            pecas=pecas_nesta_producao,
+            peso=peso_baixado,
+            valor=valor_baixado,
+            romaneio_id=romaneio_id,
+            fechado=False
+        )
+
+        db.add(nova_baixa)
+        restante -= pecas_nesta_producao
+
+    db.commit()
+
+def ajustar_lote_agrupado(db: Session, maquina_nome: str, artigo_nome: str, lote: str, novo_saldo: int):
+        producoes = db.query(models.Producao).options(
+            joinedload(models.Producao.maquina),
+            joinedload(models.Producao.artigo)
+        ).filter(
+            models.Producao.lote == lote
+        ).all()
+
+        producoes_filtradas = [
+            p for p in producoes
+            if p.maquina.nome == maquina_nome and p.artigo.nome == artigo_nome
+        ]
+
+        if not producoes_filtradas:
+            return
+
+        if novo_saldo < 0:
+            return
+
+        saldo_restante = novo_saldo
+
+        # zera tudo primeiro
+        for producao in producoes_filtradas:
+            producao.saldo_pecas = 0
+            producao.saldo_peso = 0
+
+        # redistribui o novo saldo na ordem original dos lançamentos
+        for producao in producoes_filtradas:
+            if saldo_restante <= 0:
+                break
+
+            pecas_nesta_producao = min(saldo_restante, producao.pecas)
+
+            if producao.pecas > 0:
+                peso_medio = float(producao.peso) / float(producao.pecas)
+            else:
+                peso_medio = 0
+
+            producao.saldo_pecas = pecas_nesta_producao
+            producao.saldo_peso = peso_medio * pecas_nesta_producao
+
+            saldo_restante -= pecas_nesta_producao
+
+        db.commit()

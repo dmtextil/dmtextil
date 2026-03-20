@@ -145,28 +145,34 @@
     <!-- BAIXAR LOTE -->
     <td>
         <form method="post" action="/baixar_lote">
-            <input type="hidden" name="producao_id" value="{{ producao.id }}">
-            <input type="number" name="pecas"
-                   min="1"
-                   max="{{ producao.saldo_pecas }}"
-                   required>
-            <button type="submit">Baixar</button>
+           <input type="hidden" name="maquina_nome" value="{{ producao.maquina_nome }}">
+           <input type="hidden" name="artigo_nome" value="{{ producao.artigo_nome }}">
+           <input type="hidden" name="lote" value="{{ producao.lote }}">
+
+           <input type="number" name="pecas"
+                  min="1"
+                  max="{{ producao.saldo_pecas }}"
+                  required>
+
+           <button type="submit">Baixar</button>
         </form>
     </td>
 
     <!-- AJUSTE MANUAL -->
     <td>
-        <form method="post" action="/ajustar_lote">
-            <input type="hidden" name="producao_id" value="{{ producao.id }}">
+       <form method="post" action="/ajustar_lote">
+           <input type="hidden" name="maquina_nome" value="{{ producao.maquina_nome }}">
+           <input type="hidden" name="artigo_nome" value="{{ producao.artigo_nome }}">
+           <input type="hidden" name="lote" value="{{ producao.lote }}">
 
-            <input type="number"
-                   name="novo_saldo"
-                   min="0"
-                   value="{{ producao.saldo_pecas }}"
-                   style="width:70px;">
+           <input type="number"
+                  name="novo_saldo"
+                  min="0"
+                  value="{{ producao.saldo_pecas }}"
+                  style="width:70px;">
 
-            <button type="submit">Ajustar</button>
-        </form>
+           <button type="submit">Ajustar</button>
+       </form>
     </td>
 
 </tr>

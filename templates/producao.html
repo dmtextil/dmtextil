@@ -8,7 +8,7 @@
 
 <div style="margin-bottom:10px;">
 <label>Data:</label>
-<input type="date" name="data" required>
+<input type="date" name="data" value="{{ data_hoje_input }}" required>
 </div>
 
 <div style="margin-bottom:10px;">
@@ -72,7 +72,13 @@
 
     {% for producao in producoes %}
     <tr>
-        <td>{{ producao.data }}</td>
+        <td>
+    {% if producao.data and "-" in producao.data %}
+        {{ producao.data[8:10] }}/{{ producao.data[5:7] }}/{{ producao.data[0:4] }}
+    {% else %}
+        {{ producao.data }}
+    {% endif %}
+        </td>
         <td>{{ producao.turno }}</td>
         <td>{{ producao.maquina.nome }}</td>
         <td>{{ producao.artigo.nome }}</td>
@@ -93,7 +99,13 @@
 
 <h2>Resumo da Produção</h2>
 
-<p><strong>Data:</strong> {{ data_hoje or "" }}</p>
+<p><strong>Data:</strong>
+{% if data_hoje and "-" in data_hoje %}
+    {{ data_hoje[8:10] }}/{{ data_hoje[5:7] }}/{{ data_hoje[0:4] }}
+{% else %}
+    {{ data_hoje or "" }}
+{% endif %}
+</p>
 
 <p><strong>Total 1º turno:</strong> {{ "%.2f"|format((total_1_turno or 0)|float) }} kg</p>
 <p><strong>Total 2º turno:</strong> {{ "%.2f"|format((total_2_turno or 0)|float) }} kg</p>

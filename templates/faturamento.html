@@ -101,29 +101,29 @@
         <h3 style="margin-top:0;">Faturamento diário</h3>
 
         <table border="1" cellpadding="6">
-            <tr>
-                <th>Dia</th>
-                <th>Descrição</th>
-                <th>Produção (R$)</th>
-                <th>Extras (R$)</th>
-                <th>Total do Dia (R$)</th>
-            </tr>
+    <tr>
+        <th>Dia</th>
+        <th>Descrição</th>
+        <th>Produção (R$)</th>
+        <th>Extras (R$)</th>
+        <th>Total do Dia (R$)</th>
+    </tr>
 
-            {% for item in faturamento_dias %}
-            <tr>
-                <td>{{ item.dia }}</td>
-                <td>{{ item.descricao }}</td>
-                <td>{{ "%.2f"|format((item.valor_producao or 0)|float) }}</td>
-                <td>{{ "%.2f"|format((item.valor_extras or 0)|float) }}</td>
-                <td><strong>{{ "%.2f"|format((item.total_dia or 0)|float) }}</strong></td>
-            </tr>
-            {% endfor %}
+    {% for item in faturamento_dias %}
+    <tr>
+        <td>{{ item.dia }}</td>
+        <td>{{ item.descricao }}</td>
+        <td>{{ "%.2f"|format((item.valor_producao or 0)|float) }}</td>
+        <td>{{ "%.2f"|format((item.valor_extras or 0)|float) }}</td>
+        <td><strong>{{ "%.2f"|format((item.total_dia or 0)|float) }}</strong></td>
+    </tr>
+    {% endfor %}
 
-            <tr style="background:#eee; font-weight:bold;">
-                <td colspan="4">TOTAL DO MÊS</td>
-                <td>{{ "%.2f"|format((total_mes or 0)|float) }}</td>
-            </tr>
-        </table>
+    <tr style="background:#eee; font-weight:bold;">
+        <td colspan="4">TOTAL DO MÊS</td>
+        <td>{{ "%.2f"|format((total_mes or 0)|float) }}</td>
+    </tr>
+</table>
     </div>
 
     <!-- RESUMO 12 MESES -->
