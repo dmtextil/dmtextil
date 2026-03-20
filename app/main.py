@@ -275,6 +275,37 @@ def salvar_artigo(
     finally:
         db.close()
 
+@app.post("/editar_artigo")
+def editar_artigo(
+    request: Request,
+    artigo_id: int = Form(...),
+    nome: str = Form(...),
+    codigo: str = Form(...),
+    valor_kg: float = Form(...),
+    cliente_id: int = Form(...)
+):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
+    db = SessionLocal()
+    try:
+        artigo = db.query(models.Artigo).filter(
+            models.Artigo.id == artigo_id
+        ).first()
+
+        if artigo:
+            artigo.nome = nome
+            artigo.codigo = codigo
+            artigo.valor_kg = valor_kg
+            artigo.cliente_id = cliente_id
+
+            db.commit()
+
+        return RedirectResponse(url="/artigos", status_code=303)
+
+    finally:
+        db.close()
+
 
 # ================= MÁQUINAS =================
 

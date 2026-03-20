@@ -51,17 +51,39 @@
 </tr>
 
 {% for artigo in artigos %}
-
 <tr>
-<td>{{ artigo.id }}</td>
-<td>{{ artigo.nome }}</td>
-<td>{{ artigo.codigo }}</td>
-<td>R$ {{ "%.2f"|format((artigo.valor_kg or 0)|float) }}</td>
-<td>{{ artigo.cliente.nome }}</td>
+<form method="post" action="/editar_artigo">
+
+    <input type="hidden" name="artigo_id" value="{{ artigo.id }}">
+
+    <td>
+        <input type="text" name="nome" value="{{ artigo.nome }}" required>
+    </td>
+
+    <td>
+        <input type="text" name="codigo" value="{{ artigo.codigo or '' }}">
+    </td>
+
+    <td>
+        <input type="number" step="0.01" name="valor_kg"
+               value="{{ artigo.valor_kg }}" required>
+    </td>
+
+    <td>
+        <select name="cliente_id" required>
+            {% for cliente in clientes %}
+                <option value="{{ cliente.id }}"
+                    {% if cliente.id == artigo.cliente_id %}selected{% endif %}>
+                    {{ cliente.nome }}
+                </option>
+            {% endfor %}
+        </select>
+    </td>
+
+    <td>
+        <button type="submit">Salvar</button>
+    </td>
+
+</form>
 </tr>
-
 {% endfor %}
-
-</table>
-
-{% endblock %}
