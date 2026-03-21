@@ -11,7 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 
 from app.database import Base, engine, SessionLocal
-import app.models
+from app import models
 from app import crud
 
 Base.metadata.create_all(bind=engine)
