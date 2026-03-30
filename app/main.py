@@ -352,26 +352,29 @@ def salvar_maquina(request: Request, nome: str = Form(...)):
 
 @app.get("/producao", response_class=HTMLResponse)
 def tela_producao(request: Request):
-    from datetime import date
+    from datetime import date, timedelta
 
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
 
     data_hoje_input = date.today().isoformat()
+    hoje_texto = date.today().isoformat()
+    ontem_texto = (date.today() - timedelta(days=1)).isoformat()
 
     db = SessionLocal()
     try:
-        hoje_texto = date.today().isoformat()
-
         producoes = db.query(Producao).filter(
-            Producao.data == hoje_texto
+            Producao.data.in_([hoje_texto, ontem_texto])
         ).order_by(
+            Producao.data.desc(),
             Producao.id.desc()
         ).all()
+
         maquinas = crud.listar_maquinas(db)
         artigos = crud.listar_artigos(db)
 
-        data_hoje = hoje_texto
+        # resumo sempre do dia anterior
+        data_hoje = ontem_texto
         total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
         total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
         total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
@@ -410,6 +413,8 @@ def salvar_producao(
     lote: str = Form(...),
     peso: str = Form(...)
 ):
+    from datetime import date, timedelta
+
     peso_texto = peso.replace(",", ".").replace(" ", "")
 
     if "+" in peso_texto:
@@ -427,26 +432,27 @@ def salvar_producao(
             artigo_id, lote, pecas, peso_calculado
         )
 
-        producoes = crud.listar_producoes(db)
+        hoje_texto = date.today().isoformat()
+        ontem_texto = (date.today() - timedelta(days=1)).isoformat()
+
+        producoes = db.query(Producao).filter(
+            Producao.data.in_([hoje_texto, ontem_texto])
+        ).order_by(
+            Producao.data.desc(),
+            Producao.id.desc()
+        ).all()
+
         maquinas = crud.listar_maquinas(db)
         artigos = crud.listar_artigos(db)
 
-        data_hoje = ""
-        total_1_turno = 0
-        total_2_turno = 0
-        total_3_turno = 0
-        total_dia = 0
-        valor_total_dia = 0
-        resumo_maquinas = {}
-
-        if producoes:
-            data_hoje = producoes[-1].data
-            total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
-            total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
-            total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
-            total_dia = crud.total_do_dia(db, data_hoje)
-            valor_total_dia = crud.valor_total_do_dia(db, data_hoje)
-            resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data_hoje)
+        # resumo sempre do dia anterior
+        data_hoje = ontem_texto
+        total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
+        total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
+        total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
+        total_dia = crud.total_do_dia(db, data_hoje)
+        valor_total_dia = crud.valor_total_do_dia(db, data_hoje)
+        resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data_hoje)
 
         return templates.TemplateResponse(
             "producao.html",
@@ -456,6 +462,7 @@ def salvar_producao(
                 "maquinas": maquinas,
                 "artigos": artigos,
                 "data_hoje": data_hoje,
+                "data_hoje_input": hoje_texto,
                 "total_1_turno": total_1_turno,
                 "total_2_turno": total_2_turno,
                 "total_3_turno": total_3_turno,
