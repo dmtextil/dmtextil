@@ -2,117 +2,181 @@
 
 {% block conteudo %}
 
-<div style="max-width:1100px; margin:0 auto;">
+<a href="/romaneio" style="
+    display:inline-block;
+    padding:10px 16px;
+    background:#2e7d32;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+    font-weight:bold;
+    margin-bottom:15px;
+">
+    📄 Ver último romaneio gerado
+</a>
 
-    <h1 style="text-align:center; margin-bottom:5px;">
-        Painel da Produção
-    </h1>
+<h1>Controle de Lotes</h1>
 
-    <p style="text-align:center; color:#666; margin-top:0;">
-        Data: <strong>{{ data_hoje }}</strong>
-    </p>
+<h2>Lançar lote manual</h2>
 
-    <div style="
-        display:grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap:25px;
-        margin-top:35px;
-    ">
+<form method="post" action="/lotes/manual" style="margin-bottom:25px;">
 
-        <div style="
-            background:white;
-            border:1px solid #ddd;
-            border-radius:10px;
-            padding:22px;
-            text-align:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.05);
-        ">
-            <h3 style="margin-top:0; color:#555;">
-                Produção do Dia
-            </h3>
-
-            <div style="
-                font-size:36px;
-                font-weight:bold;
-                color:#2c3e50;
-                margin-top:10px;
-            ">
-                {{ (total_dia or 0)|peso_br }}
-            </div>
-
-            <div style="color:#777;">kg</div>
-        </div>
-
-        <div style="
-            background:white;
-            border:1px solid #ddd;
-            border-radius:10px;
-            padding:22px;
-            text-align:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.05);
-        ">
-            <h3 style="margin-top:0; color:#555;">
-                Valor do Dia
-            </h3>
-
-            <div style="
-                font-size:36px;
-                font-weight:bold;
-                color:#27ae60;
-                margin-top:10px;
-            ">
-                {{ (valor_total_dia or 0)|moeda_br }}
-            </div>
-        </div>
-
-        <div style="
-            background:white;
-            border:1px solid #ddd;
-            border-radius:10px;
-            padding:22px;
-            text-align:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.05);
-        ">
-            <h3 style="margin-top:0; color:#555;">
-                Peças em Estoque
-            </h3>
-
-            <div style="
-                font-size:36px;
-                font-weight:bold;
-                color:#8e44ad;
-                margin-top:10px;
-            ">
-                {{ total_pecas }}
-            </div>
-        </div>
-
-        <div style="
-            background:white;
-            border:1px solid #ddd;
-            border-radius:10px;
-            padding:22px;
-            text-align:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.05);
-        ">
-            <h3 style="margin-top:0; color:#555;">
-                Peso em Estoque
-            </h3>
-
-            <div style="
-                font-size:36px;
-                font-weight:bold;
-                color:#d35400;
-                margin-top:10px;
-            ">
-                {{ (total_peso or 0)|peso_br }}
-            </div>
-
-            <div style="color:#777;">kg</div>
-        </div>
-
+    <div style="margin-bottom:10px;">
+        <label>Máquina:</label>
+        <select name="maquina_id" required>
+            {% for maquina in maquinas %}
+                <option value="{{ maquina.id }}">{{ maquina.nome }}</option>
+            {% endfor %}
+        </select>
     </div>
 
-</div>
+    <div style="margin-bottom:10px;">
+        <label>Artigo:</label>
+        <select name="artigo_id" required>
+            {% for artigo in artigos %}
+                <option value="{{ artigo.id }}">{{ artigo.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Lote:</label>
+        <input type="text" name="lote" maxlength="20" required>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Peças:</label>
+        <input type="number" name="pecas" min="1" required>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <label>Peso (kg):</label>
+        <input type="text" name="peso" required>
+    </div>
+
+    <button type="submit">Adicionar lote</button>
+</form>
+
+<h2>Estoque Atual</h2>
+
+<p><strong>Peças em estoque:</strong> {{ total_pecas }}</p>
+
+<p><strong>Peso total em estoque:</strong>
+{{ (total_peso or 0)|peso_br }} kg
+</p>
+
+<br>
+
+<h2>Estoque por Artigo</h2>
+
+<table border="1" cellpadding="8">
+
+<tr>
+<th>Artigo</th>
+<th>Peças</th>
+<th>Peso (kg)</th>
+</tr>
+
+{% for artigo, dados in estoque_artigos.items() %}
+<tr>
+<td>{{ artigo }}</td>
+<td>{{ dados.pecas }}</td>
+<td>{{ (dados.peso or 0)|peso_br }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<h2>Estoque por Cliente</h2>
+
+<table border="1" cellpadding="8">
+<tr>
+    <th>Cliente</th>
+    <th>Peças</th>
+    <th>Peso (kg)</th>
+    <th>Valor (R$)</th>
+</tr>
+
+{% for cliente, dados in estoque_clientes.items() %}
+<tr>
+    <td>{{ cliente }}</td>
+    <td>{{ dados.pecas }}</td>
+    <td>{{ (dados.peso or 0)|peso_br }}</td>
+    <td>{{ (dados.valor or 0)|moeda_br }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<table border="1" cellpadding="8">
+
+<tr>
+    <th>Máquina</th>
+    <th>Lote</th>
+    <th>Artigo</th>
+    <th>Peças</th>
+    <th>Peso (kg)</th>
+    <th>Saldo Peças</th>
+    <th>Saldo Peso (kg)</th>
+    <th>Status</th>
+    <th>Baixar</th>
+    <th>Ajustar</th>
+</tr>
+
+{% for producao in producoes %}
+
+<tr>
+    <td>{{ producao.maquina_nome }}</td>
+    <td>{{ producao.lote }}</td>
+    <td>{{ producao.artigo_nome }}</td>
+    <td>{{ producao.pecas }}</td>
+    <td>{{ (producao.peso or 0)|peso_br }}</td>
+    <td>{{ producao.saldo_pecas }}</td>
+    <td>{{ (producao.saldo_peso or 0)|peso_br }}</td>
+
+    <td>
+    {{ producao.status }}
+    </td>
+
+    <td>
+        <form method="post" action="/baixar_lote">
+           <input type="hidden" name="maquina_nome" value="{{ producao.maquina_nome }}">
+           <input type="hidden" name="artigo_nome" value="{{ producao.artigo_nome }}">
+           <input type="hidden" name="lote" value="{{ producao.lote }}">
+
+           <input type="number" name="pecas"
+                  min="1"
+                  max="{{ producao.saldo_pecas }}"
+                  required>
+
+           <button type="submit">Baixar</button>
+        </form>
+    </td>
+
+    <td>
+       <form method="post" action="/ajustar_lote">
+           <input type="hidden" name="maquina_nome" value="{{ producao.maquina_nome }}">
+           <input type="hidden" name="artigo_nome" value="{{ producao.artigo_nome }}">
+           <input type="hidden" name="lote" value="{{ producao.lote }}">
+
+           <input type="number"
+                  name="novo_saldo"
+                  min="0"
+                  value="{{ producao.saldo_pecas }}"
+                  style="width:70px;">
+
+           <button type="submit">Ajustar</button>
+       </form>
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
 
 {% endblock %}
