@@ -46,6 +46,19 @@ app.add_middleware(
 )
 templates = Jinja2Templates(directory="templates")
 
+def formatar_moeda(valor):
+    if valor is None:
+        return "R$ 0,00"
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def formatar_peso(valor):
+    if valor is None:
+        return "0,000"
+    return f"{valor:,.3f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+templates.env.filters["moeda"] = formatar_moeda
+templates.env.filters["peso"] = formatar_peso
+
 def verificar_login(request: Request):
     usuario = request.session.get("usuario")
     if not usuario:

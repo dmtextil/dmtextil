@@ -84,9 +84,9 @@
         <td>{{ producao.artigo.nome }}</td>
         <td>{{ producao.lote }}</td>
         <td>{{ producao.pecas }}</td>
-        <td>{{ "%.2f"|format((producao.peso or 0)|float) }}</td>
-        <td>R$ {{ "%.2f"|format((producao.valor_kg or 0)|float) }}</td>
-        <td>R$ {{ "%.2f"|format((producao.valor_total or 0)|float) }}</td>
+        <td>{{ (producao.peso or 0)|float | peso }}</td>
+        <td>{{ (producao.valor_kg or 0)|float | moeda }}</td>
+        <td>{{ (producao.valor_total or 0)|float | moeda }}</td>
         <td>
             <form method="post" action="/producao/excluir" onsubmit="return confirm('Deseja realmente excluir este lançamento?');">
                 <input type="hidden" name="producao_id" value="{{ producao.id }}">
@@ -107,11 +107,11 @@
 {% endif %}
 </p>
 
-<p><strong>Total 1º turno:</strong> {{ "%.2f"|format((total_1_turno or 0)|float) }} kg</p>
-<p><strong>Total 2º turno:</strong> {{ "%.2f"|format((total_2_turno or 0)|float) }} kg</p>
-<p><strong>Total 3º turno:</strong> {{ "%.2f"|format((total_3_turno or 0)|float) }} kg</p>
-<h3>Total do dia: {{ "%.2f"|format((total_dia or 0)|float) }} kg</h3>
-<h3>Valor total do dia: R$ {{ "%.2f"|format((valor_total_dia or 0)|float) }}</h3>
+<p><strong>Total 1º turno:</strong> {{ (total_1_turno or 0)|float | peso }} kg</p>
+<p><strong>Total 2º turno:</strong> {{ (total_2_turno or 0)|float | peso }} kg</p>
+<p><strong>Total 3º turno:</strong> {{{ (total_3_turno or 0)|float | peso }} kg</p>
+<h3>Total do dia: {{ (total_dia or 0)|float | peso }} kg</h3>
+<h3>Valor total do dia: {{ (valor_total_dia or 0)|float | moeda }}</h3>
 
 <h2>Produção por Máquina</h2>
 
@@ -120,8 +120,8 @@
 {% for maquina, dados in resumo_maquinas.items() %}
     <li>
         <strong>{{ maquina }}</strong> —
-        {{ "%.2f"|format((dados.peso_total or 0)|float) }} kg |
-        R$ {{ "%.2f"|format((dados.valor_total or 0)|float) }}
+        {{ (dados.peso_total or 0)|float | peso }} kg |
+        {{ (dados.valor_total or 0)|float | moeda }}
     </li>
 {% endfor %}
 </ul>
