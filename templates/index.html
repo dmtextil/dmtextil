@@ -19,7 +19,6 @@
         margin-top:35px;
     ">
 
-        <!-- Produção do dia -->
         <div style="
             background:white;
             border:1px solid #ddd;
@@ -38,13 +37,12 @@
                 color:#2c3e50;
                 margin-top:10px;
             ">
-                {{ "%.2f"|format((total_dia or 0)|float) }}
+                {{ (total_dia or 0)|peso_br }}
             </div>
 
             <div style="color:#777;">kg</div>
         </div>
 
-        <!-- Valor do dia -->
         <div style="
             background:white;
             border:1px solid #ddd;
@@ -63,11 +61,10 @@
                 color:#27ae60;
                 margin-top:10px;
             ">
-                R$ {{ "%.2f"|format((valor_total_dia or 0)|float) }}
+                {{ (valor_total_dia or 0)|moeda_br }}
             </div>
         </div>
 
-        <!-- Peças em estoque -->
         <div style="
             background:white;
             border:1px solid #ddd;
@@ -90,7 +87,6 @@
             </div>
         </div>
 
-        <!-- Peso em estoque -->
         <div style="
             background:white;
             border:1px solid #ddd;
@@ -109,7 +105,7 @@
                 color:#d35400;
                 margin-top:10px;
             ">
-                {{ "%.2f"|format((total_peso or 0)|float) }}
+                {{ (total_peso or 0)|peso_br }}
             </div>
 
             <div style="color:#777;">kg</div>

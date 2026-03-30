@@ -61,13 +61,13 @@
     {% for maquina in maquinas %}
         {% set dados = linha.maquinas[maquina.nome] %}
 
-        <td>{{ "%.2f"|format((dados.t1 or 0)|float) }}</td>
-        <td>{{ "%.2f"|format((dados.t2 or 0)|float) }}</td>
-        <td>{{ "%.2f"|format((dados.t3 or 0)|float) }}</td>
-        <td><strong>{{ "%.2f"|format((dados.total or 0)|float) }}</strong></td>
+        <td>{{ (dados.t1 or 0)|peso_br }}</td>
+        <td>{{ (dados.t2 or 0)|peso_br }}</td>
+        <td>{{ (dados.t3 or 0)|peso_br }}</td>
+        <td><strong>{{ (dados.total or 0)|peso_br }}</strong></td>
     {% endfor %}
 
-    <td><strong>{{ "%.2f"|format((linha.total_dia or 0)|float) }}</strong></td>
+    <td><strong>{{ (linha.total_dia or 0)|peso_br }}</strong></td>
 
 </tr>
 {% endfor %}
@@ -77,10 +77,10 @@
 
     {% for maquina in maquinas %}
         <td colspan="3"></td>
-        <td>{{ "%.2f"|format((totais_maquina[maquina.nome] or 0)|float) }}</td>
+        <td>{{ (totais_maquina[maquina.nome] or 0)|peso_br }}</td>
     {% endfor %}
 
-    <td>{{ "%.2f"|format((total_geral_mes or 0)|float) }}</td>
+    <td>{{ (total_geral_mes or 0)|peso_br }}</td>
 </tr>
 
 </table>
@@ -104,10 +104,10 @@
     <td>{{ linha.mes_nome }}</td>
 
     {% for maquina in maquinas %}
-        <td>{{ "%.2f"|format((linha.maquinas[maquina.nome] or 0)|float) }}</td>
+        <td>{{ (linha.maquinas[maquina.nome] or 0)|peso_br }}</td>
     {% endfor %}
 
-    <td><strong>{{ "%.2f"|format((linha.total_mes or 0)|float) }}</strong></td>
+    <td><strong>{{ (linha.total_mes or 0)|peso_br }}</strong></td>
 </tr>
 {% endfor %}
 
@@ -115,10 +115,10 @@
     <td>TOTAL ANO</td>
 
     {% for maquina in maquinas %}
-        <td>{{ "%.2f"|format((totais_anuais_maquina[maquina.nome] or 0)|float) }}</td>
+        <td>{{ (totais_anuais_maquina[maquina.nome] or 0)|peso_br }}</td>
     {% endfor %}
 
-    <td>{{ "%.2f"|format((total_geral_ano or 0)|float) }}</td>
+    <td>{{ (total_geral_ano or 0)|peso_br }}</td>
 </tr>
 
 </table>
@@ -144,7 +144,7 @@
             </div>
 
             <div style="font-size:11px; color:#555; margin-top:4px;">
-                {{ "%.2f"|format((valor or 0)|float) }}
+                {{ (valor or 0)|peso_br }}
             </div>
 
         </div>
@@ -173,7 +173,7 @@
             </div>
 
             <div style="font-size:10px; color:#555; margin-top:4px; text-align:center;">
-                {{ "%.2f"|format((valor or 0)|float) }}
+                {{ (valor or 0)|peso_br }}
             </div>
 
         </div>
@@ -204,7 +204,7 @@
             </div>
 
             <div style="font-size:12px; color:#555;">
-                {{ "%.2f"|format((valor or 0)|float) }} kg
+                {{ (valor or 0)|peso_br }} kg
             </div>
 
         </div>

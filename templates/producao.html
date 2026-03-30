@@ -84,9 +84,9 @@
         <td>{{ producao.artigo.nome }}</td>
         <td>{{ producao.lote }}</td>
         <td>{{ producao.pecas }}</td>
-        <td>{{ (producao.peso or 0)|float | peso }}</td>
-        <td>{{ (producao.valor_kg or 0)|float | moeda }}</td>
-        <td>{{ (producao.valor_total or 0)|float | moeda }}</td>
+        <td>{{ (producao.peso or 0)|peso_br }}</td>
+        <td>{{ (producao.valor_kg or 0)|moeda_br }}</td>
+        <td>{{ (producao.valor_total or 0)|moeda_br }}</td>
         <td>
             <form method="post" action="/producao/excluir" onsubmit="return confirm('Deseja realmente excluir este lançamento?');">
                 <input type="hidden" name="producao_id" value="{{ producao.id }}">
@@ -107,11 +107,11 @@
 {% endif %}
 </p>
 
-<p><strong>Total 1º turno:</strong> {{ (total_1_turno or 0)|float | peso }} kg</p>
-<p><strong>Total 2º turno:</strong> {{ (total_2_turno or 0)|float | peso }} kg</p>
-<p><strong>Total 3º turno:</strong> {{{ (total_3_turno or 0)|float | peso }} kg</p>
-<h3>Total do dia: {{ (total_dia or 0)|float | peso }} kg</h3>
-<h3>Valor total do dia: {{ (valor_total_dia or 0)|float | moeda }}</h3>
+<p><strong>Total 1º turno:</strong> {{ (total_1_turno or 0)|peso_br }} kg</p>
+<p><strong>Total 2º turno:</strong> {{ (total_2_turno or 0)|peso_br }} kg</p>
+<p><strong>Total 3º turno:</strong> {{ (total_3_turno or 0)|peso_br }} kg</p>
+<h3>Total do dia: {{ (total_dia or 0)|peso_br }} kg</h3>
+<h3>Valor total do dia: {{ (valor_total_dia or 0)|moeda_br }}</h3>
 
 <h2>Produção por Máquina</h2>
 
@@ -120,8 +120,8 @@
 {% for maquina, dados in resumo_maquinas.items() %}
     <li>
         <strong>{{ maquina }}</strong> —
-        {{ (dados.peso_total or 0)|float | peso }} kg |
-        {{ (dados.valor_total or 0)|float | moeda }}
+        {{ (dados.peso_total or 0)|peso_br }} kg |
+        {{ (dados.valor_total or 0)|moeda_br }}
     </li>
 {% endfor %}
 </ul>

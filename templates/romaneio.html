@@ -252,8 +252,8 @@
         </tr>
         <tr>
             <td>{{ total_pecas }}</td>
-            <td>{{ "%.2f"|format((total_peso or 0)|float) }}</td>
-            <td>{{ "%.2f"|format((valor_total or 0)|float) }}</td>
+            <td>{{ (total_peso or 0)|peso_br }}</td>
+            <td>{{ (valor_total or 0)|moeda_br }}</td>
         </tr>
     </table>
 

@@ -9,7 +9,6 @@
         Acompanhamento financeiro da produção e receitas extras
     </p>
 
-    <!-- FILTRO -->
     <div style="
         background:white;
         border:1px solid #ddd;
@@ -50,10 +49,8 @@
         </form>
     </div>
 
-    <!-- TÍTULO DO MÊS -->
     <h2 style="margin-bottom:18px;">{{ nome_mes }}/{{ ano }}</h2>
 
-    <!-- FORMULÁRIO EXTRA -->
     <div style="
         background:white;
         border:1px solid #ddd;
@@ -88,7 +85,6 @@
         </form>
     </div>
 
-    <!-- TABELA PRINCIPAL -->
     <div style="
         background:white;
         border:1px solid #ddd;
@@ -113,20 +109,19 @@
     <tr>
         <td>{{ item.dia }}</td>
         <td>{{ item.descricao }}</td>
-        <td>{{ "%.2f"|format((item.valor_producao or 0)|float) }}</td>
-        <td>{{ "%.2f"|format((item.valor_extras or 0)|float) }}</td>
-        <td><strong>{{ "%.2f"|format((item.total_dia or 0)|float) }}</strong></td>
+        <td>{{ (item.valor_producao or 0)|moeda_br }}</td>
+        <td>{{ (item.valor_extras or 0)|moeda_br }}</td>
+        <td><strong>{{ (item.total_dia or 0)|moeda_br }}</strong></td>
     </tr>
     {% endfor %}
 
     <tr style="background:#eee; font-weight:bold;">
         <td colspan="4">TOTAL DO MÊS</td>
-        <td>{{ "%.2f"|format((total_mes or 0)|float) }}</td>
+        <td>{{ (total_mes or 0)|moeda_br }}</td>
     </tr>
 </table>
     </div>
 
-    <!-- RESUMO 12 MESES -->
     <div style="
         background:white;
         border:1px solid #ddd;
@@ -147,23 +142,22 @@
             {% for item in resumo_12_meses %}
             <tr>
                 <td>{{ item.mes_nome }}/{{ item.ano }}</td>
-                <td>{{ "%.2f"|format((item.total or 0)|float) }}</td>
+                <td>{{ (item.total or 0)|moeda_br }}</td>
             </tr>
             {% endfor %}
 
             <tr style="background:#eee; font-weight:bold;">
                 <td>TOTAL 12 MESES</td>
-                <td>{{ "%.2f"|format((total_12_meses or 0)|float) }}</td>
+                <td>{{ (total_12_meses or 0)|moeda_br }}</td>
             </tr>
 
             <tr style="background:#ddd; font-weight:bold;">
                 <td>MÉDIA MENSAL</td>
-                <td>{{ "%.2f"|format((media_mensal or 0)|float) }}</td>
+                <td>{{ (media_mensal or 0)|moeda_br }}</td>
             </tr>
         </table>
     </div>
 
-    <!-- GRÁFICO 12 MESES -->
     <div style="
         background:white;
         border:1px solid #ddd;
@@ -206,7 +200,7 @@
                     </div>
 
                     <div style="font-size:10px; color:#555; margin-top:4px; text-align:center;">
-                        {{ "%.2f"|format((item.total or 0)|float) }}
+                        {{ (item.total or 0)|moeda_br }}
                     </div>
 
                 </div>
@@ -215,7 +209,6 @@
         </div>
     </div>
 
-    <!-- PROJEÇÃO -->
     <div style="margin-bottom:30px;">
         <h3>Projeção do Mês Atual</h3>
 
@@ -229,14 +222,14 @@
             <div style="background:white; border:1px solid #ccc; border-radius:8px; padding:20px;">
                 <h3 style="margin-top:0;">Faturado até agora</h3>
                 <p style="font-size:28px; font-weight:bold; margin:0;">
-                    R$ {{ "%.2f"|format((faturado_mes_atual or 0)|float) }}
+                    {{ (faturado_mes_atual or 0)|moeda_br }}
                 </p>
             </div>
 
             <div style="background:white; border:1px solid #ccc; border-radius:8px; padding:20px;">
                 <h3 style="margin-top:0;">Média diária</h3>
                 <p style="font-size:28px; font-weight:bold; margin:0;">
-                    R$ {{ "%.2f"|format((media_diaria_atual or 0)|float) }}
+                    {{ (media_diaria_atual or 0)|moeda_br }}
                 </p>
             </div>
 
@@ -250,14 +243,13 @@
             <div style="background:white; border:1px solid #ccc; border-radius:8px; padding:20px;">
                 <h3 style="margin-top:0;">Projeção do mês</h3>
                 <p style="font-size:28px; font-weight:bold; margin:0;">
-                    R$ {{ "%.2f"|format((projecao_mes_atual or 0)|float) }}
+                    {{ (projecao_mes_atual or 0)|moeda_br }}
                 </p>
             </div>
 
         </div>
     </div>
 
-    <!-- COMPARATIVO -->
     <div style="
         background:white;
         border:1px solid #ddd;
@@ -278,14 +270,14 @@
             <div style="background:white; border:1px solid #ccc; border-radius:8px; padding:20px;">
                 <h3 style="margin-top:0;">Produção do mês</h3>
                 <p style="font-size:28px; font-weight:bold; margin:0;">
-                    {{ "%.2f"|format((total_producao_mes_kg or 0)|float) }} kg
+                    {{ (total_producao_mes_kg or 0)|peso_br }} kg
                 </p>
             </div>
 
             <div style="background:white; border:1px solid #ccc; border-radius:8px; padding:20px;">
                 <h3 style="margin-top:0;">Faturamento do mês</h3>
                 <p style="font-size:28px; font-weight:bold; margin:0;">
-                    R$ {{ "%.2f"|format((total_mes or 0)|float) }}
+                    {{ (total_mes or 0)|moeda_br }}
                 </p>
             </div>
 
@@ -315,7 +307,7 @@
                 "></div>
                 <div style="font-weight:bold;">Produção</div>
                 <div style="font-size:12px; color:#555;">
-                    {{ "%.2f"|format((total_producao_mes_kg or 0)|float) }} kg
+                    {{ (total_producao_mes_kg or 0)|peso_br }} kg
                 </div>
             </div>
 
@@ -328,7 +320,7 @@
                 "></div>
                 <div style="font-weight:bold;">Faturamento</div>
                 <div style="font-size:12px; color:#555;">
-                    R$ {{ "%.2f"|format((total_mes or 0)|float) }}
+                    {{ (total_mes or 0)|moeda_br }}
                 </div>
             </div>
 
