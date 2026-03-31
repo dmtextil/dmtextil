@@ -182,4 +182,21 @@
 
 </table>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const posicaoSalva = sessionStorage.getItem("scrollLotes");
+    if (posicaoSalva !== null) {
+        window.scrollTo(0, parseInt(posicaoSalva));
+        sessionStorage.removeItem("scrollLotes");
+    }
+
+    const formularios = document.querySelectorAll('form[action="/baixar_lote"], form[action="/ajustar_lote"]');
+    formularios.forEach(function(form) {
+        form.addEventListener("submit", function () {
+            sessionStorage.setItem("scrollLotes", window.scrollY);
+        });
+    });
+});
+</script>
+
 {% endblock %}
