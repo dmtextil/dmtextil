@@ -128,8 +128,9 @@
 </tr>
 
 {% for producao in producoes %}
+{% set linha_id = "linha-" ~ loop.index %}
 
-<tr>
+<tr id="{{ linha_id }}">
     <td>{{ producao.maquina_nome }}</td>
     <td>{{ producao.lote }}</td>
     <td>{{ producao.artigo_nome }}</td>
@@ -147,6 +148,7 @@
            <input type="hidden" name="maquina_nome" value="{{ producao.maquina_nome }}">
            <input type="hidden" name="artigo_nome" value="{{ producao.artigo_nome }}">
            <input type="hidden" name="lote" value="{{ producao.lote }}">
+           <input type="hidden" name="anchor" value="{{ linha_id }}">
 
            <input type="number" name="pecas"
                   min="1"
@@ -162,6 +164,7 @@
            <input type="hidden" name="maquina_nome" value="{{ producao.maquina_nome }}">
            <input type="hidden" name="artigo_nome" value="{{ producao.artigo_nome }}">
            <input type="hidden" name="lote" value="{{ producao.lote }}">
+           <input type="hidden" name="anchor" value="{{ linha_id }}">
 
            <input type="number"
                   name="novo_saldo"

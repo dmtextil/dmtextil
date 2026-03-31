@@ -577,7 +577,8 @@ def baixar_lote(
     maquina_nome: str = Form(...),
     artigo_nome: str = Form(...),
     lote: str = Form(...),
-    pecas: int = Form(...)
+    pecas: int = Form(...),
+    anchor: str = Form("")
 ):
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
@@ -585,7 +586,12 @@ def baixar_lote(
     db = SessionLocal()
     try:
         crud.baixar_lote_agrupado(db, maquina_nome, artigo_nome, lote, pecas)
-        return RedirectResponse(url="/lotes", status_code=303)
+
+        url = "/lotes"
+        if anchor:
+            url = f"/lotes#{anchor}"
+
+        return RedirectResponse(url=url, status_code=303)
     finally:
         db.close()
 
@@ -596,7 +602,8 @@ def ajustar_lote(
     maquina_nome: str = Form(...),
     artigo_nome: str = Form(...),
     lote: str = Form(...),
-    novo_saldo: int = Form(...)
+    novo_saldo: int = Form(...),
+    anchor: str = Form("")
 ):
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
@@ -604,7 +611,12 @@ def ajustar_lote(
     db = SessionLocal()
     try:
         crud.ajustar_lote_agrupado(db, maquina_nome, artigo_nome, lote, novo_saldo)
-        return RedirectResponse(url="/lotes", status_code=303)
+
+        url = "/lotes"
+        if anchor:
+            url = f"/lotes#{anchor}"
+
+        return RedirectResponse(url=url, status_code=303)
     finally:
         db.close()
 
