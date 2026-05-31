@@ -71,7 +71,7 @@ def verificar_login(request: Request):
 
 
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+def home(request: Request, data: str = None):
     from datetime import datetime
 
     if not verificar_login(request):
@@ -79,13 +79,19 @@ def home(request: Request):
 
     hoje = datetime.now()
 
-    data_hoje_iso = hoje.strftime("%Y-%m-%d")
-    data_brasil = hoje.strftime("%d/%m/%Y")
+    if not data:
+        data = hoje.strftime("%Y-%m-%d")
+
+    data_brasil = data
+    if data and "-" in data:
+        partes = data.split("-")
+        if len(partes) == 3:
+            data_brasil = f"{partes[2]}/{partes[1]}/{partes[0]}"
 
     db = SessionLocal()
     try:
-        total_dia = crud.total_do_dia(db, data_hoje_iso)
-        valor_total_dia = crud.valor_total_do_dia(db, data_hoje_iso)
+        total_dia = crud.total_do_dia(db, data)
+        valor_total_dia = crud.valor_total_do_dia(db, data)
         total_pecas, total_peso = crud.resumo_estoque(db)
 
         return templates.TemplateResponse(
@@ -93,6 +99,7 @@ def home(request: Request):
             {
                 "request": request,
                 "data_hoje": data_brasil,
+                "data_filtro": data,
                 "total_dia": total_dia,
                 "valor_total_dia": valor_total_dia,
                 "total_pecas": total_pecas,
@@ -101,7 +108,6 @@ def home(request: Request):
         )
     finally:
         db.close()
-
 
 @app.get("/login", response_class=HTMLResponse)
 def tela_login(request: Request):
