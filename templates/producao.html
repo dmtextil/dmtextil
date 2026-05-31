@@ -4,6 +4,27 @@
 
 <h1>Lançamento de Produção</h1>
 
+<div style="
+    background:white;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+    margin-bottom:25px;
+    max-width:500px;
+">
+    <form method="get" action="/producao" style="display:flex; gap:15px; align-items:end; flex-wrap:wrap;">
+        <div>
+            <label>Filtrar data:</label><br>
+            <input type="date" name="data" value="{{ data_filtro }}">
+        </div>
+
+        <div>
+            <button type="submit">Ver</button>
+        </div>
+    </form>
+</div>
+
 <form method="post" action="/producao">
 
 <div style="margin-bottom:10px;">

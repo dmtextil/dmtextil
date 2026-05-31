@@ -374,36 +374,34 @@ def salvar_maquina(request: Request, nome: str = Form(...)):
 # ================= PRODUÇÃO =================
 
 @app.get("/producao", response_class=HTMLResponse)
-def tela_producao(request: Request):
-    from datetime import date, timedelta
+def tela_producao(request: Request, data: str = None):
+    from datetime import date
 
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
 
+    if not data:
+        data = date.today().isoformat()
+
     data_hoje_input = date.today().isoformat()
-    hoje_texto = date.today().isoformat()
-    ontem_texto = (date.today() - timedelta(days=1)).isoformat()
 
     db = SessionLocal()
     try:
         producoes = db.query(Producao).filter(
-            Producao.data.in_([hoje_texto, ontem_texto])
+            Producao.data == data
         ).order_by(
-            Producao.data.desc(),
             Producao.id.desc()
         ).all()
 
         maquinas = crud.listar_maquinas(db)
         artigos = crud.listar_artigos(db)
 
-        # resumo sempre do dia anterior
-        data_hoje = ontem_texto
-        total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
-        total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
-        total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
-        total_dia = crud.total_do_dia(db, data_hoje)
-        valor_total_dia = crud.valor_total_do_dia(db, data_hoje)
-        resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data_hoje)
+        total_1_turno = crud.total_por_turno(db, data, "1º turno")
+        total_2_turno = crud.total_por_turno(db, data, "2º turno")
+        total_3_turno = crud.total_por_turno(db, data, "3º turno")
+        total_dia = crud.total_do_dia(db, data)
+        valor_total_dia = crud.valor_total_do_dia(db, data)
+        resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data)
 
         return templates.TemplateResponse(
             "producao.html",
@@ -412,7 +410,8 @@ def tela_producao(request: Request):
                 "producoes": producoes,
                 "maquinas": maquinas,
                 "artigos": artigos,
-                "data_hoje": data_hoje,
+                "data_hoje": data,
+                "data_filtro": data,
                 "data_hoje_input": data_hoje_input,
                 "total_1_turno": total_1_turno,
                 "total_2_turno": total_2_turno,
@@ -425,7 +424,6 @@ def tela_producao(request: Request):
     finally:
         db.close()
 
-
 @app.post("/producao", response_class=HTMLResponse)
 def salvar_producao(
     request: Request,
@@ -436,8 +434,6 @@ def salvar_producao(
     lote: str = Form(...),
     peso: str = Form(...)
 ):
-    from datetime import date, timedelta
-
     peso_texto = peso.replace(",", ".").replace(" ", "")
 
     if "+" in peso_texto:
@@ -455,45 +451,8 @@ def salvar_producao(
             artigo_id, lote, pecas, peso_calculado
         )
 
-        hoje_texto = date.today().isoformat()
-        ontem_texto = (date.today() - timedelta(days=1)).isoformat()
+        return RedirectResponse(url=f"/producao?data={data}", status_code=303)
 
-        producoes = db.query(Producao).filter(
-            Producao.data.in_([hoje_texto, ontem_texto])
-        ).order_by(
-            Producao.data.desc(),
-            Producao.id.desc()
-        ).all()
-
-        maquinas = crud.listar_maquinas(db)
-        artigos = crud.listar_artigos(db)
-
-        # resumo sempre do dia anterior
-        data_hoje = ontem_texto
-        total_1_turno = crud.total_por_turno(db, data_hoje, "1º turno")
-        total_2_turno = crud.total_por_turno(db, data_hoje, "2º turno")
-        total_3_turno = crud.total_por_turno(db, data_hoje, "3º turno")
-        total_dia = crud.total_do_dia(db, data_hoje)
-        valor_total_dia = crud.valor_total_do_dia(db, data_hoje)
-        resumo_maquinas = crud.resumo_por_maquina_no_dia(db, data_hoje)
-
-        return templates.TemplateResponse(
-            "producao.html",
-            {
-                "request": request,
-                "producoes": producoes,
-                "maquinas": maquinas,
-                "artigos": artigos,
-                "data_hoje": data_hoje,
-                "data_hoje_input": hoje_texto,
-                "total_1_turno": total_1_turno,
-                "total_2_turno": total_2_turno,
-                "total_3_turno": total_3_turno,
-                "total_dia": total_dia,
-                "valor_total_dia": valor_total_dia,
-                "resumo_maquinas": resumo_maquinas
-            }
-        )
     finally:
         db.close()
 
