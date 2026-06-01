@@ -86,6 +86,57 @@
     </div>
 
     <div style="
+    background:white;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+    margin-bottom:25px;
+    overflow-x:auto;
+">
+    <h3 style="margin-top:0;">Lançamentos Extras</h3>
+
+    {% if extras_mes %}
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Valor</th>
+            <th>Ação</th>
+        </tr>
+
+        {% for extra in extras_mes %}
+        <tr>
+            <td>
+                {% if extra.data and "-" in extra.data %}
+                    {{ extra.data[8:10] }}/{{ extra.data[5:7] }}/{{ extra.data[0:4] }}
+                {% else %}
+                    {{ extra.data }}
+                {% endif %}
+            </td>
+
+            <td>{{ extra.descricao }}</td>
+
+            <td>{{ (extra.valor or 0)|moeda_br }}</td>
+
+            <td>
+                <form method="post" action="/faturamento/extra/excluir"
+                      onsubmit="return confirm('Deseja realmente excluir este lançamento extra?');">
+                    <input type="hidden" name="extra_id" value="{{ extra.id }}">
+                    <input type="hidden" name="mes" value="{{ mes }}">
+                    <input type="hidden" name="ano" value="{{ ano }}">
+                    <button type="submit" style="background:#c0392b;">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+        <p>Nenhum lançamento extra neste mês.</p>
+    {% endif %}
+</div>
+
+    <div style="
         background:white;
         border:1px solid #ddd;
         border-radius:10px;

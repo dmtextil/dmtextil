@@ -1044,6 +1044,7 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
                 "ano": ano,
                 "nome_mes": nome_mes,
                 "faturamento_dias": faturamento_dias,
+                "extras_mes": extras_mes,
                 "total_mes": total_mes,
                 "resumo_12_meses": resumo_12_meses,
                 "total_12_meses": total_12_meses,
@@ -1077,5 +1078,32 @@ def salvar_faturamento_extra(
     try:
         crud.criar_faturamento_extra(db, data, descricao, float(valor_texto))
         return RedirectResponse(url="/faturamento", status_code=303)
+    finally:
+        db.close()
+
+@app.post("/faturamento/extra/excluir")
+def excluir_faturamento_extra(
+    request: Request,
+    extra_id: int = Form(...),
+    mes: int = Form(...),
+    ano: int = Form(...)
+):
+    if not verificar_login(request):
+        return RedirectResponse(url="/login", status_code=303)
+
+    db = SessionLocal()
+    try:
+        extra = db.query(models.FaturamentoExtra).filter(
+            models.FaturamentoExtra.id == extra_id
+        ).first()
+
+        if extra:
+            db.delete(extra)
+            db.commit()
+
+        return RedirectResponse(
+            url=f"/faturamento?mes={mes}&ano={ano}",
+            status_code=303
+        )
     finally:
         db.close()
