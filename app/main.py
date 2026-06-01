@@ -838,7 +838,7 @@ def tela_relatorio(request: Request, mes: int = None, ano: int = None):
         db.close()
 
 @app.get("/faturamento", response_class=HTMLResponse)
-def tela_faturamento(request: Request, mes: int = None, ano: int = None):
+def tela_faturamento(request: Request, mes: int = None, ano: int = None, data_extra: str = None):
 
     if not verificar_login(request):
         return RedirectResponse(url="/login", status_code=303)
@@ -1008,6 +1008,7 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
 
         hoje_real = datetime.now()
         data_hoje_str = hoje_real.strftime("%Y-%m-%d")
+        data_filtro_extra = data_extra or data_hoje_str
 
         faturado_mes_atual = 0
         dias_decorridos = 0
@@ -1044,7 +1045,8 @@ def tela_faturamento(request: Request, mes: int = None, ano: int = None):
                 "ano": ano,
                 "nome_mes": nome_mes,
                 "faturamento_dias": faturamento_dias,
-                "extras_mes": extras_mes,
+                "extras_mes": [extra for extra in extras_mes if extra.data == data_filtro_extra],
+                "data_filtro_extra": data_filtro_extra,
                 "total_mes": total_mes,
                 "resumo_12_meses": resumo_12_meses,
                 "total_12_meses": total_12_meses,

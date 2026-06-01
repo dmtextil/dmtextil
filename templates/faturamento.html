@@ -96,6 +96,20 @@
 ">
     <h3 style="margin-top:0;">Lançamentos Extras</h3>
 
+        <form method="get" action="/faturamento" style="display:flex; gap:15px; align-items:end; flex-wrap:wrap; margin-bottom:15px;">
+    <input type="hidden" name="mes" value="{{ mes }}">
+    <input type="hidden" name="ano" value="{{ ano }}">
+
+    <div>
+        <label>Filtrar data:</label><br>
+        <input type="date" name="data_extra" value="{{ data_filtro_extra }}">
+    </div>
+
+    <div>
+        <button type="submit">Ver Extras</button>
+    </div>
+</form>
+
     {% if extras_mes %}
     <table border="1" cellpadding="6">
         <tr>
